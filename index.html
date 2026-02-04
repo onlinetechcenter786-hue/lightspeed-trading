@@ -3,77 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAHI Pro | Lightspeed Trading</title>
+    <title>SAHI | High Performance Trading</title>
     <style>
-        :root { --primary: #6366f1; --bg: #0b0e14; --card: #161b22; --accent: #38bdf8; }
+        :root { --primary: linear-gradient(90deg, #6366f1, #a855f7); --bg: #0b0e14; --card: #161b22; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; }
-        .container { max-width: 420px; margin: auto; padding: 20px; min-height: 100vh; }
+        .container { max-width: 420px; margin: auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
         .hidden { display: none !important; }
-        
+
+        /* Login Screen (As per Screenshot) */
+        .brand { text-align: center; margin: 40px 0; }
+        .brand h1 { font-size: 36px; letter-spacing: 4px; font-weight: 900; }
+        .hero-text { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 40px; }
+        .google-btn { background: #fff; color: #000; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
         /* Dashboard */
-        .wallet-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #30363d; cursor: pointer; transition: 0.3s; }
-        .wallet-card:active { transform: scale(0.98); }
-        .price { font-size: 42px; font-weight: 800; text-align: center; margin: 20px 0; }
+        .wallet-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #30363d; cursor: pointer; margin-bottom: 20px; }
+        .price-val { font-size: 42px; font-weight: 800; text-align: center; margin: 20px 0; }
         .up { color: #22c55e; } .down { color: #ef4444; }
-        canvas { width: 100%; height: 180px; }
+        canvas { width: 100%; height: 180px; background: rgba(0,0,0,0.2); border-radius: 10px; }
 
-        /* Wallet Section (Separate) */
-        #wallet-section { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 100; padding: 20px; box-sizing: border-box; }
-        .back-btn { background: none; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; }
-
-        /* Popup / Modal */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 200; }
+        /* Modal / Popup */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; border: 1px solid #30363d; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #30363d; background: #0b0e14; color: #fff; font-size: 18px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #30363d; background: #000; color: #fff; text-align: center; box-sizing: border-box; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .buy-btn { background: #22c55e; color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 12px; cursor: pointer; }
+        .sell-btn { background: #ef4444; color: #fff; font-weight: bold; border: none; padding: 15px; border-radius: 12px; cursor: pointer; }
         
-        /* Buttons */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .buy { background: #22c55e; color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 12px; cursor: pointer; }
-        .sell { background: #ef4444; color: #fff; font-weight: bold; border: none; padding: 15px; border-radius: 12px; cursor: pointer; }
+        #wallet-ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 500; padding: 20px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" class="container">
-    <h1 style="text-align:center; margin-top:100px;">SAHI</h1>
-    <button onclick="login()" style="width:100%; padding:15px; border-radius:10px; margin-top:50px; cursor:pointer; font-weight:bold;">Login with Google</button>
+    <div class="brand"><h1>SAHI</h1><p>F&O | Stocks | ETF | IPO</p></div>
+    <div class="hero-text">High Performance<br>Trading</div>
+    <button class="google-btn" onclick="login()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+        Continue with Google
+    </button>
 </div>
 
 <div id="app-screen" class="container hidden">
-    <div class="wallet-card" onclick="showWallet()">
-        <div style="font-size: 12px; opacity: 0.6;">Wallet Balance (Click to Manage)</div>
-        <div style="font-size: 24px; font-weight: bold;">₹<span id="bal-val">0.00</span></div>
+    <div class="wallet-card" onclick="toggleWallet(true)">
+        <div style="font-size: 12px; opacity: 0.6;">Available Margin (Manage)</div>
+        <div style="font-size: 24px; font-weight: bold;">₹<span id="bal-display">0.00</span></div>
     </div>
 
-    <div class="price" id="price-val">₹166.65</div>
-    <canvas id="liveChart"></canvas>
+    <div class="price-val" id="price-display">₹166.65</div>
+    <canvas id="chartCanvas"></canvas>
 
-    <div class="btn-grid" style="margin-top: 20px;">
-        <button class="buy" onclick="openTrade('buy')">BUY</button>
-        <button class="sell" onclick="openTrade('sell')">SELL</button>
+    <div class="btn-grid">
+        <button class="buy-btn" onclick="openTrade('buy')">BUY</button>
+        <button class="sell-btn" onclick="openTrade('sell')">SELL</button>
     </div>
 </div>
 
-<div id="wallet-section" class="hidden">
-    <button class="back-btn" onclick="hideWallet()">← Back</button>
-    <h2>Wallet Management</h2>
+<div id="wallet-ui" class="hidden">
+    <button onclick="toggleWallet(false)" style="background:none; border:1px solid #333; color:#fff; padding:10px; border-radius:8px;">← Back</button>
+    <h2 style="margin-top:30px;">Wallet</h2>
     <div class="wallet-card">
-        <p>Current Funds: ₹<span id="bal-val-2">0.00</span></p>
+        <p>Current Balance: ₹<span id="bal-display-2">0.00</span></p>
     </div>
-    <div class="btn-grid" style="margin-top:20px;">
-        <button class="buy" style="background:#38bdf8" onclick="addRequest('Deposit')">ADD MONEY</button>
-        <button class="sell" style="background:#fff; color:#000" onclick="addRequest('Withdraw')">WITHDRAW</button>
+    <div class="btn-grid">
+        <button class="buy-btn" style="background:#38bdf8" onclick="reqMoney('Deposit')">ADD MONEY</button>
+        <button class="sell-btn" style="background:#fff; color:#000" onclick="reqMoney('Withdraw')">WITHDRAW</button>
     </div>
 </div>
 
 <div id="trade-modal" class="modal hidden">
     <div class="modal-content">
-        <h3 id="modal-title">Trade Lightspeed</h3>
-        <p style="font-size:12px; opacity:0.6;">Price: ₹<span id="modal-price">0</span></p>
-        <input type="number" id="trade-qty" placeholder="Quantity" value="1">
+        <h3 id="m-title">BUY LSC</h3>
+        <p style="font-size:12px; opacity:0.6;">Current Price: ₹<span id="m-price">0</span></p>
+        <input type="number" id="t-qty" value="1" min="1">
         <div class="btn-grid">
-            <button id="confirm-btn" class="buy" onclick="executeTrade()">Confirm</button>
-            <button onclick="closeTrade()" style="background:#30363d; color:white; border:none; border-radius:12px;">Cancel</button>
+            <button id="m-confirm" class="buy-btn" onclick="confirmTrade()">Confirm</button>
+            <button onclick="closeTrade()" style="background:#333; color:#fff; border:none; border-radius:12px;">Cancel</button>
         </div>
     </div>
 </div>
@@ -81,93 +87,110 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { /* Aapka Config Yahan Copy Karein */ };
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+        authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
+        projectId: "lightspeed-trading-1dec9",
+        storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
+        messagingSenderId: "787355268629",
+        appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
+    };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    let currentPrice = 166.65;
+    let price = 166.65;
     let userData = {};
-    let tradeType = 'buy';
-    let history = JSON.parse(localStorage.getItem('lsc_history')) || [];
+    let currentMode = 'buy';
+    let history = JSON.parse(localStorage.getItem('trade_history')) || [];
 
-    // --- WALLET NAVIGATION ---
-    window.showWallet = () => document.getElementById('wallet-section').classList.remove('hidden');
-    window.hideWallet = () => document.getElementById('wallet-section').classList.add('hidden');
+    window.login = () => signInWithPopup(auth, provider);
+    window.toggleWallet = (show) => document.getElementById('wallet-ui').className = show ? '' : 'hidden';
 
-    // --- TRADE POPUP ---
-    window.openTrade = (type) => {
-        tradeType = type;
+    window.openTrade = (mode) => {
+        currentMode = mode;
         document.getElementById('trade-modal').classList.remove('hidden');
-        document.getElementById('modal-title').innerText = type.toUpperCase() + " LSC";
-        document.getElementById('modal-price').innerText = currentPrice.toFixed(2);
-        document.getElementById('confirm-btn').className = type;
+        document.getElementById('m-title').innerText = mode.toUpperCase() + " LIGHTSPEED";
+        document.getElementById('m-price').innerText = price.toFixed(2);
+        document.getElementById('m-confirm').className = mode + "-btn";
     };
+
     window.closeTrade = () => document.getElementById('trade-modal').classList.add('hidden');
 
-    // --- EXECUTE TRADE ---
-    window.executeTrade = async () => {
-        const qty = parseInt(document.getElementById('trade-qty').value);
-        const totalCost = currentPrice * qty;
-        const userRef = doc(db, "users", auth.currentUser.uid);
+    window.confirmTrade = async () => {
+        const qty = parseInt(document.getElementById('t-qty').value);
+        const total = price * qty;
+        const uRef = doc(db, "users", auth.currentUser.uid);
 
-        if (tradeType === 'buy' && userData.wallet >= totalCost) {
-            let newHoldings = userData.holdings + qty;
-            let newAvg = ((userData.holdings * userData.avgPrice) + totalCost) / newHoldings;
-            await updateDoc(userRef, { wallet: userData.wallet - totalCost, holdings: newHoldings, avgPrice: newAvg });
-        } else if (tradeType === 'sell' && userData.holdings >= qty) {
-            await updateDoc(userRef, { wallet: userData.wallet + totalCost, holdings: userData.holdings - qty });
+        if(currentMode === 'buy' && userData.wallet >= total) {
+            let newAvg = ((userData.holdings * userData.avgPrice) + total) / (userData.holdings + qty);
+            await updateDoc(uRef, { wallet: userData.wallet - total, holdings: userData.holdings + qty, avgPrice: newAvg });
+        } else if(currentMode === 'sell' && userData.holdings >= qty) {
+            await updateDoc(uRef, { wallet: userData.wallet + total, holdings: userData.holdings - qty });
         } else {
-            alert("Incomplete Funds or Holdings!");
+            alert("Insufficient Funds/Holdings!");
         }
         closeTrade();
     };
 
-    // --- GRAPH HISTORY (3 DAYS) ---
-    function updateHistory(p) {
-        const now = Date.now();
-        history.push({ p: p, t: now });
-        // Delete older than 3 days (3 * 24 * 60 * 60 * 1000 ms)
-        history = history.filter(item => now - item.t < 259200000);
-        localStorage.setItem('lsc_history', JSON.stringify(history));
-    }
-
-    // --- AUTH & SYNC ---
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const userRef = doc(db, "users", user.uid);
-            onSnapshot(userRef, (d) => {
-                userData = d.data();
-                document.getElementById('bal-val').innerText = userData.wallet.toFixed(2);
-                document.getElementById('bal-val-2').innerText = userData.wallet.toFixed(2);
+    window.reqMoney = async (type) => {
+        const amt = prompt(`Enter ${type} Amount:`);
+        if(amt && !isNaN(amt)) {
+            await addDoc(collection(db, "requests"), {
+                uid: auth.currentUser.uid,
+                email: auth.currentUser.email,
+                amount: parseFloat(amt),
+                type: type,
+                status: "pending",
+                time: serverTimestamp()
             });
+            alert("Request sent!");
+        }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        if(user) {
+            const uRef = doc(db, "users", user.uid);
+            const snap = await getDoc(uRef);
+            if(!snap.exists()) await setDoc(uRef, { wallet: 10000, holdings: 0, avgPrice: 0 });
+            
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
+
+            onSnapshot(uRef, (d) => {
+                userData = d.data();
+                document.getElementById('bal-display').innerText = userData.wallet.toFixed(2);
+                document.getElementById('bal-display-2').innerText = userData.wallet.toFixed(2);
+            });
             startMarket();
         }
     });
 
     function startMarket() {
         setInterval(() => {
-            currentPrice += (Math.random() - 0.5) * 2;
-            document.getElementById('price-val').innerText = "₹" + currentPrice.toFixed(2);
-            updateHistory(currentPrice);
+            price += (Math.random() - 0.5) * 1.5;
+            document.getElementById('price-display').innerText = "₹" + price.toFixed(2);
+            const now = Date.now();
+            history.push({ p: price, t: now });
+            // 3 Day Filter (259200000 ms)
+            history = history.filter(h => now - h.t < 259200000);
+            localStorage.setItem('trade_history', JSON.stringify(history));
             drawChart();
         }, 3000);
     }
 
     function drawChart() {
-        const c = document.getElementById('liveChart');
+        const c = document.getElementById('chartCanvas');
         const ctx = c.getContext('2d');
         ctx.clearRect(0,0,c.width,c.height);
-        ctx.beginPath();
-        ctx.strokeStyle = "#38bdf8";
-        let prices = history.map(h => h.p);
-        let min = Math.min(...prices), max = Math.max(...prices), r = max - min + 1;
-        prices.slice(-40).forEach((p, i) => {
+        ctx.beginPath(); ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2;
+        let pArr = history.map(h => h.p);
+        let min = Math.min(...pArr), max = Math.max(...pArr), r = max - min + 1;
+        pArr.slice(-40).forEach((p, i) => {
             let x = (i/39) * c.width;
             let y = c.height - ((p-min)/r) * c.height;
             if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
