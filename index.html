@@ -1,222 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAHI Pro | Trading</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --bg: #0b0e14; --card: #161b22; --primary: #38bdf8; --green: #22c55e; --red: #ef4444; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: white; overflow-x: hidden; }
-        .container { max-width: 420px; margin: auto; padding: 20px; }
-        .hidden { display: none !important; }
-        
-        /* Glassmorphism Card Style */
-        .glass-card { 
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px; padding: 20px; margin-bottom: 20px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAHI Pro Trading</title>
 
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .avatar { width: 35px; height: 35px; background: var(--primary); border-radius: 50%; display: grid; place-items: center; font-weight: bold; }
-        
-        /* Chart Container for Scrolling/Pinching */
-        .chart-container { position: relative; height: 200px; width: 100%; overflow-x: auto; }
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet">
 
-        .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: #1e293b; border: none; color: #94a3b8; padding: 10px; border-radius: 12px; cursor: pointer; }
-        .tab-btn.active { background: var(--primary); color: #000; }
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; cursor: pointer; }
-        .stat-item { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; }
+<style>
+:root{
+ --bg:#0b0e14;--primary:#38bdf8;--green:#22c55e;--red:#ef4444;
+}
+body{margin:0;font-family:Inter,sans-serif;background:var(--bg);color:#fff}
+.container{max-width:420px;margin:auto;padding:20px}
+.hidden{display:none}
 
-        .btn { padding: 16px; border: none; border-radius: 18px; font-weight: 800; cursor: pointer; width: 100%; }
-        .btn-buy { background: var(--green); color: #000; }
-        .btn-sell { background: var(--red); color: #fff; }
+/* AUTH */
+.auth-hero{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.auth-card{
+ background:linear-gradient(145deg,#0f172a,#020617);
+ padding:40px 24px;border-radius:26px;text-align:center;
+ box-shadow:0 30px 70px rgba(0,0,0,.7)
+}
+.auth-tagline{
+ font-family:'Playfair Display',serif;font-style:italic;
+ font-size:18px;margin:25px 0 35px;
+ background:linear-gradient(90deg,#facc15,#fb923c,#facc15);
+ -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.google-btn{
+ width:100%;height:56px;border:none;border-radius:16px;
+ background:#fff;font-weight:700;display:flex;gap:14px;
+ align-items:center;justify-content:center;cursor:pointer;
+}
+.google-btn img{width:26px}
 
-        /* Wallet Page Style */
-        .wallet-actions { display: grid; gap: 10px; margin-top: 20px; }
-        .input-box { width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 12px; box-sizing: border-box; }
-    </style>
+/* APP */
+.glass{
+ background:linear-gradient(145deg,#1e293b,#0f172a);
+ border-radius:22px;padding:20px;margin-bottom:20px
+}
+.header{display:flex;justify-content:space-between;align-items:center}
+.avatar{
+ width:36px;height:36px;border-radius:50%;
+ background:var(--primary);display:grid;place-items:center;font-weight:800
+}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.tab-btn{padding:10px;border-radius:12px;border:none;background:#1e293b;color:#94a3b8}
+.tab-btn.active{background:var(--primary);color:#000}
+.chart-box{height:220px}
+.btn{padding:16px;border-radius:18px;border:none;font-weight:800;width:100%}
+.btn-buy{background:var(--green)}
+.btn-sell{background:var(--red);color:#fff}
+</style>
 </head>
+
 <body>
 
-<div id="auth-page" class="container" style="text-align: center; padding-top: 100px;">
-    <h1>SAHI</h1>
-    <button onclick="login()" style="width:100%; padding:15px; border-radius:15px; font-weight:bold;">Login with Google</button>
+<!-- AUTH PAGE -->
+<div id="auth-page" class="auth-hero">
+ <div class="auth-card">
+  <h1>SAHI</h1>
+  <div class="auth-tagline">Aaj hi apne paiso ko kaam par lagao</div>
+  <button class="google-btn" onclick="login()">
+   <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png">
+   Continue with Google
+  </button>
+ </div>
 </div>
 
+<!-- APP PAGE -->
 <div id="app-page" class="container hidden">
-    <div class="header">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div class="avatar" id="u-initial">U</div>
-            <div>Hi, <b id="u-name">Trader</b></div>
-        </div>
-        <button onclick="logout()" style="background:none; color:#666; border:none;">Logout</button>
-    </div>
 
-    <div class="glass-card" id="main-market">
-        <div style="opacity:0.6;">Lightspeed / INR</div>
-        <div id="price-val" style="font-size:32px; font-weight:800;">₹0.00</div>
-        <div class="chart-container">
-            <canvas id="liveChart"></canvas>
-        </div>
-    </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchPage('market')">Market</button>
-        <button class="tab-btn" onclick="switchPage('history')">History</button>
-        <button class="tab-btn" onclick="switchPage('wallet')">Wallet</button>
-    </div>
-
-    <div id="sec-market">
-        <div class="glass-card stats-grid" onclick="switchPage('wallet')">
-            <div class="stat-item">Wallet Balance<br><b>₹<span id="s-bal">0.00</span></b></div>
-            <div class="stat-item">Holdings<br><b><span id="s-qty">0</span> LSC</b></div>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-            <button class="btn btn-sell" onclick="trade('sell')">Sell</button>
-            <button class="btn btn-buy" onclick="trade('buy')">Buy</button>
-        </div>
-    </div>
-
-    <div id="sec-history" class="hidden">
-        <h3>Trade History</h3>
-        <div id="history-list"></div>
-    </div>
-
-    <div id="sec-wallet" class="hidden">
-        <div class="glass-card">
-            <h3>Wallet Balance: ₹<span id="w-bal">0.00</span></h3>
-            <input type="number" id="w-amount" class="input-box" placeholder="Enter Amount">
-            <div class="wallet-actions">
-                <button class="btn btn-buy" onclick="walletAction('Deposit')">Add Money</button>
-                <button class="btn btn-sell" onclick="walletAction('Withdraw')">Withdraw</button>
-            </div>
-        </div>
-    </div>
+<div class="header">
+ <div style="display:flex;gap:10px;align-items:center">
+  <div class="avatar" id="u-initial">U</div>
+  <div>Hi, <b id="u-name">Trader</b></div>
+ </div>
+ <button onclick="logout()" style="background:none;border:none;color:#888">Logout</button>
 </div>
 
+<div class="glass">
+ <div style="opacity:.6">Lightspeed / INR</div>
+ <div id="price" style="font-size:32px;font-weight:800">₹0.00</div>
+ <div class="chart-box"><canvas id="chart"></canvas></div>
+</div>
+
+<div class="tabs">
+ <button class="tab-btn active" onclick="showTab('market',this)">Market</button>
+ <button class="tab-btn" onclick="showTab('history',this)">History</button>
+ <button class="tab-btn" onclick="showTab('wallet',this)">Wallet</button>
+</div>
+
+<div id="market">
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+  <button class="btn btn-sell" onclick="trade('sell')">Sell</button>
+  <button class="btn btn-buy" onclick="trade('buy')">Buy</button>
+ </div>
+</div>
+
+<div id="history" class="hidden"></div>
+
+<div id="wallet" class="hidden">
+ <div class="glass">Wallet Balance ₹<b id="bal">0.00</b></div>
+</div>
+
+</div>
+
+<!-- FIREBASE + LOGIC -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAnalytics, logEvent, setUserId } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
-        authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
-        projectId: "lightspeed-trading-1dec9",
-        storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
-        messagingSenderId: "787355268629",
-        appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
-    };
+const firebaseConfig = {
+ apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+ authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
+ projectId: "lightspeed-trading-1dec9",
+ storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
+ messagingSenderId: "787355268629",
+ appId: "1:787355268629:web:c5c39b7706c6a3548e001c",
+ measurementId: "G-BMG3R0GB2T"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
-    let myChart, price = 163.10;
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
-    // --- Graph Persistence (Firestore Based) ---
-    async function syncGraph() {
-        const q = query(collection(db, "market_history"), orderBy("time", "desc"), limit(20));
-        onSnapshot(q, (s) => {
-            const data = s.docs.map(d => d.data().price).reverse();
-            const labels = s.docs.map(d => "").reverse();
-            myChart.data.labels = labels;
-            myChart.data.datasets[0].data = data;
-            myChart.update();
-            if(data.length > 0) {
-                price = data[data.length-1];
-                document.getElementById('price-val').innerText = "₹" + price.toFixed(2);
-            }
-        });
-    }
+let chart, price = 150;
 
-    // --- Market Engine (Runs only if Admin is active or use local simulation) ---
-    function startLocalMarket() {
-        setInterval(async () => {
-            price += (Math.random() - 0.5) * 1.5;
-            // Note: In real app, only Admin should write to market_history
-            // To prevent refresh reset, we fetch from this collection
-        }, 3000);
-    }
+/* MARKET ENGINE (GLOBAL SYNC) */
+setInterval(async()=>{
+ price += (Math.random()-0.5)*2;
+ await addDoc(collection(db,"market_history"),{
+  price, time: serverTimestamp()
+ });
+},4000);
 
-    // --- App Logic ---
-    window.switchPage = (p) => {
-        ['market', 'history', 'wallet'].forEach(s => document.getElementById('sec-'+s).classList.add('hidden'));
-        document.getElementById('sec-'+p).classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    }
+/* CHART */
+function initChart(){
+ chart = new Chart(document.getElementById('chart'),{
+  type:'line',
+  data:{labels:[],datasets:[{data:[],borderColor:'#38bdf8',tension:.4}]},
+  options:{plugins:{legend:{display:false}},scales:{x:{display:false}}}
+ });
 
-    window.walletAction = async (type) => {
-        const amt = parseFloat(document.getElementById('w-amount').value);
-        if(!amt || amt < 10) return alert("Min ₹10");
-        await addDoc(collection(db, "requests"), {
-            uid: auth.currentUser.uid,
-            email: auth.currentUser.email,
-            amount: amt,
-            type: type,
-            status: "pending",
-            time: serverTimestamp()
-        });
-        alert(type + " Request Sent to Admin!");
-    };
+ const q = query(collection(db,"market_history"),orderBy("time"),limit(20));
+ onSnapshot(q,s=>{
+  const arr = s.docs.map(d=>d.data().price);
+  chart.data.datasets[0].data = arr;
+  chart.update();
+  price = arr[arr.length-1] || price;
+  document.getElementById("price").innerText = "₹"+price.toFixed(2);
+ });
+ logEvent(analytics,'market_view');
+}
 
-    onAuthStateChanged(auth, async (u) => {
-        if (u) {
-            document.getElementById('auth-page').classList.add('hidden');
-            document.getElementById('app-page').classList.remove('hidden');
-            initChart();
-            syncGraph();
-            loadUserData(u.uid);
-            loadTradeHistory(u.uid);
-        }
-    });
+/* AUTH */
+window.login = ()=>signInWithPopup(auth,provider);
 
-    function initChart() {
-        const ctx = document.getElementById('liveChart').getContext('2d');
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ data: [], borderColor: '#38bdf8', borderWidth: 3, tension: 0.4, fill: true, backgroundColor: 'rgba(56, 189, 248, 0.1)' }] },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
-                scales: { x: { display: false }, y: { grid: { color: '#333' } } }
-            }
-        });
-    }
+window.logout = ()=>{
+ logEvent(analytics,'logout');
+ signOut(auth).then(()=>location.reload());
+};
 
-    function loadUserData(uid) {
-        onSnapshot(doc(db, "users", uid), (d) => {
-            const data = d.data();
-            document.getElementById('s-bal').innerText = document.getElementById('w-bal').innerText = data.wallet.toFixed(2);
-            document.getElementById('s-qty').innerText = data.qty;
-        });
-    }
+onAuthStateChanged(auth,u=>{
+ if(u){
+  setUserId(analytics,u.uid);
+  logEvent(analytics,'login_success',{method:'google'});
+  authPage.classList.add("hidden");
+  appPage.classList.remove("hidden");
+  uName.innerText = u.displayName;
+  uInitial.innerText = u.displayName[0];
+  initChart();
+ }
+});
 
-    function loadTradeHistory(uid) {
-        const q = query(collection(db, "trades"), where("uid", "==", uid), orderBy("time", "desc"));
-        onSnapshot(q, (s) => {
-            const list = document.getElementById('history-list');
-            list.innerHTML = "";
-            s.forEach(doc => {
-                const t = doc.data();
-                list.innerHTML += `<div class="glass-card" style="padding:10px; border-left:4px solid ${t.type=='buy'?'#22c55e':'#ef4444'}">
-                    <b>${t.type.toUpperCase()}</b> ${t.qty} LSC @ ₹${t.price.toFixed(2)}
-                </div>`;
-            });
-        });
-    }
+/* UI */
+window.showTab = (id,btn)=>{
+ ['market','history','wallet'].forEach(s=>document.getElementById(s).classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+ logEvent(analytics,'screen_view',{screen:id});
+};
 
-    window.login = () => signInWithPopup(auth, provider);
-    window.logout = () => signOut(auth).then(() => location.reload());
-
-    window.trade = async (mode) => {
-        const qty = parseInt(prompt("Qty:"));
-        if(!qty) return;
-        // Basic trade logic... (same as previous)
-        await addDoc(collection(db, "trades"), { uid: auth.currentUser.uid, type: mode, qty, price, time: serverTimestamp() });
-    };
+/* TRADE */
+window.trade = async(type)=>{
+ const qty = parseInt(prompt("Qty"));
+ if(!qty) return;
+ await addDoc(collection(db,"trades"),{
+  uid:auth.currentUser.uid,type,qty,price,time:serverTimestamp()
+ });
+ logEvent(analytics,'trade_execute',{type,qty,price});
+ alert(type.toUpperCase()+" @ ₹"+price.toFixed(2));
+};
 </script>
+
 </body>
 </html>
