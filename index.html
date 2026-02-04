@@ -3,81 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lightspeed Trading (LSC)</title>
+    <title>SAHI | Lightspeed Trading</title>
     <style>
-        :root { --primary: #6366f1; --bg: #0f172a; --card: #020617; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; }
-        .container { max-width: 420px; margin: auto; padding: 15px; }
-        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        :root { --primary: #6366f1; --bg: #0b0e14; --card: #161b22; --accent: #38bdf8; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; overflow-x: hidden; }
+        .container { max-width: 420px; margin: auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
         .hidden { display: none !important; }
         
-        /* UI Elements */
-        .price { font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .up { color: #22c55e; } .down { color: #ef4444; }
-        canvas { width: 100%; height: 160px; background: #020617; border-radius: 10px; }
-        .stats { display: flex; justify-content: space-between; margin: 15px 0; font-size: 14px; }
-        
-        /* Buttons */
-        .btns { display: flex; gap: 10px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .buy { background: #22c55e; color: #000; }
-        .sell { background: #ef4444; color: #fff; }
-        .action-btn { background: #334155; color: white; width: 100%; margin-top: 10px; font-size: 12px; }
+        /* Login UI */
+        .brand { text-align: center; margin: 40px 0; }
+        .brand h1 { font-size: 36px; letter-spacing: 4px; margin: 0; font-weight: 900; }
+        .hero-text { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 40px; }
+        .google-btn { 
+            background: #fff; color: #000; width: 100%; padding: 15px; border: none; border-radius: 12px; 
+            font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
 
-        /* Input Styles */
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        #recaptcha-container { margin: 10px 0; }
+        /* Trading Dashboard */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .wallet-card { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid #30363d; margin-bottom: 20px; }
+        .price-section { text-align: center; margin: 20px 0; }
+        .price { font-size: 42px; font-weight: 800; transition: 0.3s; }
+        .up { color: #22c55e; } .down { color: #ef4444; }
+        
+        canvas { width: 100%; height: 180px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .stat-box { background: var(--card); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid #30363d; }
+        
+        .trade-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        button.buy { background: #22c55e; color: #000; padding: 16px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
+        button.sell { background: #ef4444; color: #fff; padding: 16px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
+        .deposit-btn { background: #30363d; color: #fff; width: 100%; padding: 12px; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; font-size: 12px; }
+
+        .footer-text { font-size: 10px; opacity: 0.4; text-align: center; margin-top: auto; padding: 20px 0; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" class="container">
-    <div class="card">
-        <h2 style="text-align:center">🚀 Lightspeed Login</h2>
-        <div id="phone-step">
-            <input type="tel" id="phone-input" placeholder="+91 9876543210">
-            <div id="recaptcha-container"></div>
-            <button class="buy" style="width:100%" onclick="sendOTP()">Send OTP</button>
-        </div>
-        <div id="otp-step" class="hidden">
-            <input type="text" id="otp-input" placeholder="Enter 6-Digit OTP">
-            <button class="buy" style="width:100%" onclick="verifyOTP()">Verify OTP</button>
-        </div>
+    <div class="brand"><h1>SAHI</h1></div>
+    <div class="hero-text">High Performance<br>Trading</div>
+    <div style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid #30363d;">
+        <button class="google-btn" onclick="login()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+            Continue with Google
+        </button>
     </div>
+    <div class="footer-text">SEBI Registered Broker • IFTA Startup of the Year 2025</div>
 </div>
 
 <div id="app-screen" class="container hidden">
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span>Wallet: ₹<b id="balance">0.00</b></span>
-            <span id="pl" style="font-size:12px">P/L: ₹0</span>
-        </div>
-        
-        <h2 style="margin:10px 0 0 0">🪙 Lightspeed (LSC)</h2>
-        <div class="price down" id="price">₹166.65</div>
-
-        <canvas id="chart"></canvas>
-
-        <div class="stats">
-            <div>Coins: <span id="coins">0</span></div>
-            <div>Avg: ₹<span id="avg">0</span></div>
-        </div>
-
-        <div class="btns">
-            <button class="buy" onclick="trade('buy')">BUY</button>
-            <button class="sell" onclick="trade('sell')">SELL</button>
-        </div>
-
-        <button class="action-btn" onclick="requestDeposit()">ADD MONEY (Deposit Request)</button>
+    <div class="header">
+        <span style="font-weight: bold; color: var(--accent);">Lightspeed (LSC)</span>
+        <button onclick="logout()" style="background:none; border:none; color:#ef4444; cursor:pointer;">Logout</button>
     </div>
+
+    <div class="wallet-card">
+        <div style="font-size: 12px; opacity: 0.6;">Available Margin</div>
+        <div style="font-size: 24px; font-weight: bold;">₹<span id="bal-val">0.00</span></div>
+    </div>
+
+    <div class="price-section">
+        <div class="price" id="price-val">₹166.65</div>
+        <div id="pl-val" style="font-size: 14px; margin-top: 5px;">P/L: ₹0.00</div>
+    </div>
+
+    <canvas id="liveChart"></canvas>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div style="font-size:10px; opacity:0.6;">HOLDINGS</div>
+            <div id="hold-val" style="font-weight:bold;">0</div>
+        </div>
+        <div class="stat-box">
+            <div style="font-size:10px; opacity:0.6;">AVG PRICE</div>
+            <div id="avg-val" style="font-weight:bold;">₹0</div>
+        </div>
+    </div>
+
+    <div class="trade-btns">
+        <button class="buy" onclick="handleTrade('buy')">BUY</button>
+        <button class="sell" onclick="handleTrade('sell')">SELL</button>
+    </div>
+
+    <button class="deposit-btn" onclick="addMoney()">ADD MONEY (Deposit Request)</button>
+    
+    <div class="footer-text">Real-time market simulation • No real money involved</div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- YOUR CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
         authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
@@ -90,112 +109,108 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
-    let price = 166.65;
-    let userData = { wallet: 0, holdings: 0, avgPrice: 0 };
-    let prices = [166, 165, 166.65];
+    let currentPrice = 166.65;
+    let userDbData = {};
+    let priceHistory = [166.65, 166.80, 166.50];
 
-    // --- AUTHENTICATION ---
-    window.sendOTP = function() {
-        const phone = document.getElementById('phone-input').value;
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'normal' });
-        signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
-            .then((res) => { 
-                window.confirmationResult = res; 
-                document.getElementById('phone-step').className = 'hidden';
-                document.getElementById('otp-step').className = '';
-            }).catch(err => alert(err.message));
-    }
-
-    window.verifyOTP = function() {
-        const otp = document.getElementById('otp-input').value;
-        confirmationResult.confirm(otp).then(() => location.reload()).catch(() => alert("Wrong OTP"));
-    }
+    // Auth Functions
+    window.login = () => signInWithPopup(auth, provider).catch(e => alert(e.message));
+    window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            document.getElementById('auth-screen').className = 'hidden';
-            document.getElementById('app-screen').className = 'container';
             const userRef = doc(db, "users", user.uid);
             const snap = await getDoc(userRef);
-            if(!snap.exists()) {
-                await setDoc(userRef, { wallet: 10000, holdings: 0, avgPrice: 0, phone: user.phoneNumber });
+            if (!snap.exists()) {
+                await setDoc(userRef, { wallet: 10000, holdings: 0, avgPrice: 0, name: user.displayName });
             }
-            onSnapshot(userRef, (d) => { userData = d.data(); updateUI(); });
-            setInterval(updatePrice, 2000);
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            
+            onSnapshot(userRef, (d) => {
+                userDbData = d.data();
+                updateUI();
+            });
+            startMarket();
+        } else {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
         }
     });
 
-    // --- TRADING LOGIC ---
-    function updatePrice() {
-        let change = (Math.random() - 0.5) * 3;
-        price += change;
-        if(price < 10) price = 10;
-        prices.push(price);
-        if(prices.length > 30) prices.shift();
-        
-        document.getElementById('price').innerText = "₹" + price.toFixed(2);
-        document.getElementById('price').className = "price " + (change >= 0 ? "up" : "down");
-        drawChart();
-        updatePL();
+    // Market Logic
+    function startMarket() {
+        setInterval(() => {
+            let change = (Math.random() - 0.5) * 2;
+            currentPrice += change;
+            priceHistory.push(currentPrice);
+            if(priceHistory.length > 40) priceHistory.shift();
+            
+            const pEl = document.getElementById('price-val');
+            pEl.innerText = "₹" + currentPrice.toFixed(2);
+            pEl.className = "price " + (change >= 0 ? "up" : "down");
+            
+            updatePL();
+            drawChart();
+        }, 2000);
     }
 
-    window.trade = async function(type) {
+    // Trade Logic
+    window.handleTrade = async (type) => {
         const userRef = doc(db, "users", auth.currentUser.uid);
-        if(type === 'buy' && userData.wallet >= price) {
-            let newAvg = ((userData.holdings * userData.avgPrice) + price) / (userData.holdings + 1);
-            await updateDoc(userRef, {
-                wallet: userData.wallet - price,
-                holdings: userData.holdings + 1,
-                avgPrice: newAvg
-            });
-        } else if(type === 'sell' && userData.holdings > 0) {
-            await updateDoc(userRef, {
-                wallet: userData.wallet + price,
-                holdings: userData.holdings - 1,
-                avgPrice: userData.holdings === 1 ? 0 : userData.avgPrice
-            });
+        if (type === 'buy' && userDbData.wallet >= currentPrice) {
+            let newHoldings = userDbData.holdings + 1;
+            let newAvg = ((userDbData.holdings * userDbData.avgPrice) + currentPrice) / newHoldings;
+            await updateDoc(userRef, { wallet: userDbData.wallet - currentPrice, holdings: newHoldings, avgPrice: newAvg });
+        } else if (type === 'sell' && userDbData.holdings > 0) {
+            let newHoldings = userDbData.holdings - 1;
+            await updateDoc(userRef, { wallet: userDbData.wallet + currentPrice, holdings: newHoldings, avgPrice: newHoldings === 0 ? 0 : userDbData.avgPrice });
         }
-    }
+    };
 
-    window.requestDeposit = async function() {
-        const amt = prompt("Enter Amount to Deposit:");
-        if(amt) {
+    window.addMoney = async () => {
+        const amt = prompt("Enter amount to deposit (₹):");
+        if(amt && !isNaN(amt)) {
             await addDoc(collection(db, "requests"), {
                 uid: auth.currentUser.uid,
-                phone: auth.currentUser.phoneNumber,
+                phone: auth.currentUser.email, // using email as identifier
                 amount: parseFloat(amt),
                 status: "pending",
                 time: serverTimestamp()
             });
-            alert("Deposit request sent to Admin!");
+            alert("Deposit request submitted to Admin!");
         }
     }
 
     function updateUI() {
-        document.getElementById('balance').innerText = userData.wallet.toFixed(2);
-        document.getElementById('coins').innerText = userData.holdings;
-        document.getElementById('avg').innerText = userData.avgPrice.toFixed(2);
+        document.getElementById('bal-val').innerText = userDbData.wallet.toFixed(2);
+        document.getElementById('hold-val').innerText = userDbData.holdings;
+        document.getElementById('avg-val').innerText = "₹" + userDbData.avgPrice.toFixed(2);
     }
 
     function updatePL() {
-        let pl = (price - userData.avgPrice) * userData.holdings;
-        const el = document.getElementById('pl');
-        el.innerText = "P/L: ₹" + pl.toFixed(2);
-        el.style.color = pl >= 0 ? "#22c55e" : "#ef4444";
+        if(userDbData.holdings > 0) {
+            let pl = (currentPrice - userDbData.avgPrice) * userDbData.holdings;
+            const el = document.getElementById('pl-val');
+            el.innerText = "P/L: ₹" + pl.toFixed(2);
+            el.style.color = pl >= 0 ? "#22c55e" : "#ef4444";
+        }
     }
 
     function drawChart() {
-        const c = document.getElementById('chart');
-        const ctx = c.getContext('2d');
-        ctx.clearRect(0,0,c.width,c.height);
+        const canvas = document.getElementById('liveChart');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
         ctx.strokeStyle = "#38bdf8";
-        let min = Math.min(...prices), max = Math.max(...prices), r = max - min + 1;
-        prices.forEach((p, i) => {
-            let x = (i/(prices.length-1)) * c.width;
-            let y = c.height - ((p-min)/r) * c.height;
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        ctx.lineWidth = 3;
+        let min = Math.min(...priceHistory), max = Math.max(...priceHistory), range = max - min + 1;
+        priceHistory.forEach((p, i) => {
+            let x = (i / (priceHistory.length - 1)) * canvas.width;
+            let y = canvas.height - ((p - min) / range) * canvas.height;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
     }
