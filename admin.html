@@ -3,43 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAHI | Ultimate Admin</title>
+    <title>SAHI Admin | Market Master</title>
     <style>
         :root { --bg: #0b0e14; --card: #161b22; --primary: #38bdf8; --green: #22c55e; --red: #ef4444; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; padding: 20px; display: none; }
+        .section { background: var(--card); border: 1px solid #333; padding: 20px; border-radius: 20px; margin-bottom: 20px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--card); border: 1px solid #333; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
-        .section-title { color: var(--primary); border-left: 4px solid var(--primary); padding-left: 10px; margin: 20px 0; }
-        button { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-green { background: var(--green); color: #000; }
-        .btn-red { background: var(--red); color: #fff; }
-        input { width: 100%; padding: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; margin-top: 10px; box-sizing: border-box;}
-        .req-card { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 10px 0; }
+        button { padding: 12px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-up { background: var(--green); color: #000; }
+        .btn-down { background: var(--red); color: #fff; }
+        .btn-blue { background: var(--primary); color: #000; }
+        input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 10px; margin: 10px 0; box-sizing: border-box; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
+        .badge { padding: 2px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2 id="admin-head">🛠️ SAHI Command Center</h2>
+    <h2 style="color: var(--primary);">🛠️ SAHI Pro Admin</h2>
 
-    <div class="section-title">📈 Live Market Controller (Graph Data)</div>
-    <div class="card">
-        <div style="font-size: 24px; font-weight: 800; text-align: center;">Current: ₹<span id="live-p">0.00</span></div>
-        <div class="grid" style="margin-top:15px;">
-            <button class="btn-green" onclick="setTrend('up')">Push Price UP ↑</button>
-            <button class="btn-red" onclick="setTrend('down')">Push Price DOWN ↓</button>
+    <div class="section">
+        <h3>📈 Graph Controller</h3>
+        <p style="font-size: 12px; opacity: 0.6;">Is page ko band na karein, tabhi User App mein graph chalega.</p>
+        <div style="font-size: 32px; font-weight: 800; text-align: center; margin: 15px 0;">₹<span id="price-display">0.00</span></div>
+        <div class="grid">
+            <button class="btn-up" onclick="setTrend('up')">PUSH UP ↑</button>
+            <button class="btn-down" onclick="setTrend('down')">PUSH DOWN ↓</button>
         </div>
-        <p style="font-size: 11px; opacity: 0.5; text-align: center; margin-top: 10px;">Yeh panel khula rehne par graph update hota rahega.</p>
+        <button class="btn-blue" style="width:100%; margin-top:10px;" onclick="setTrend('normal')">RESET TO NORMAL</button>
     </div>
 
-    <div class="section-title">📥 Wallet Requests (Deposit/Withdraw)</div>
-    <div class="card" id="req-list">Loading requests...</div>
+    <div class="section">
+        <h3>📥 Wallet Requests</h3>
+        <div id="req-list">Loading requests...</div>
+    </div>
 
-    <div class="section-title">👥 User Management & History</div>
-    <div id="user-list"></div>
+    <div class="section">
+        <h3>👥 All Users</h3>
+        <div id="user-list"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, limit, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
@@ -53,43 +59,42 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Security Prompt
-        const pass = prompt("Enter Admin Key:");
-        if(pass === "786") { document.body.style.display = "block"; } 
-        else { window.location.href = "index.html"; }
+        // Simple Security
+        const pin = prompt("Admin PIN:");
+        if(pin === "786") { document.body.style.display = "block"; } else { window.location.href = "index.html"; }
 
-        // --- MARKET ENGINE (Updating Graph History) ---
+        // --- MARKET ENGINE ---
         let currentPrice = 165.00;
         let trend = "normal";
-
-        window.setTrend = (t) => { trend = t; alert("Trend set to: " + t); };
+        window.setTrend = (t) => { trend = t; console.log("Trend set to: " + t); };
 
         setInterval(async () => {
-            if(trend === "up") currentPrice += Math.random() * 2;
-            else if(trend === "down") currentPrice -= Math.random() * 2;
-            else currentPrice += (Math.random() - 0.5) * 1.5;
+            // Price Calculation
+            if(trend === "up") currentPrice += Math.random() * 1.5;
+            else if(trend === "down") currentPrice -= Math.random() * 1.5;
+            else currentPrice += (Math.random() - 0.5) * 1.2;
 
-            document.getElementById('live-p').innerText = currentPrice.toFixed(2);
+            document.getElementById('price-display').innerText = currentPrice.toFixed(2);
 
-            // Save to history so user graph stays persistent
-            await addDoc(collection(db, "market_history"), {
-                price: currentPrice,
-                time: serverTimestamp()
-            });
+            // Send to Firestore (User App yahan se data leta hai)
+            try {
+                await addDoc(collection(db, "market_history"), {
+                    price: currentPrice,
+                    time: serverTimestamp()
+                });
+            } catch (e) { console.error("Database Error: ", e); }
+        }, 4000); // Har 4 second mein graph update hoga
 
-            // Cleanup: Sirf latest 50 points rakhein (Database clean rakhne ke liye)
-        }, 4000);
-
-        // --- WALLET REQUESTS LOGIC ---
+        // --- WALLET REQUESTS ---
         onSnapshot(query(collection(db, "requests"), where("status", "==", "pending")), (snap) => {
             const cont = document.getElementById('req-list');
-            cont.innerHTML = snap.empty ? "No pending requests" : "";
+            cont.innerHTML = snap.empty ? "<small>No pending requests</small>" : "";
             snap.forEach(d => {
                 const r = d.data();
                 cont.innerHTML += `
-                    <div class="req-card">
+                    <div class="list-item">
                         <div><b>${r.email}</b><br><small>${r.type}: ₹${r.amount}</small></div>
-                        <button class="btn-green" onclick="approveReq('${d.id}', '${r.uid}', ${r.amount}, '${r.type}')">Approve</button>
+                        <button class="btn-up" onclick="approveReq('${d.id}', '${r.uid}', ${r.amount}, '${r.type}')">Approve</button>
                     </div>`;
             });
         });
@@ -97,11 +102,12 @@
         window.approveReq = async (id, uid, amt, type) => {
             const uRef = doc(db, "users", uid);
             const uSnap = await getDoc(uRef);
-            let newBal = type === 'Deposit' ? (uSnap.data().wallet + amt) : (uSnap.data().wallet - amt);
+            if(!uSnap.exists()) return alert("User not found!");
             
+            let newBal = type === 'Deposit' ? (uSnap.data().wallet + amt) : (uSnap.data().wallet - amt);
             await updateDoc(uRef, { wallet: newBal });
             await updateDoc(doc(db, "requests", id), { status: "approved" });
-            alert("Success!");
+            alert("Done!");
         };
 
         // --- USER LIST ---
@@ -111,19 +117,21 @@
             snap.forEach(d => {
                 const u = d.data();
                 cont.innerHTML += `
-                    <div class="card">
-                        <b>${u.name || 'Trader'}</b> | Bal: ₹${u.wallet.toFixed(2)}
-                        <input type="number" id="bal-${d.id}" placeholder="New Balance">
-                        <button class="btn-green" style="margin-top:5px; width:100%" onclick="manualBal('${d.id}')">Update Balance</button>
+                    <div class="list-item" style="display:block; margin-bottom:10px;">
+                        <b>${u.name || 'User'}</b> <span class="badge" style="background:#333">₹${u.wallet.toFixed(2)}</span>
+                        <div class="grid" style="margin-top:5px;">
+                            <input type="number" id="bal-${d.id}" placeholder="Set Bal">
+                            <button class="btn-blue" onclick="setBal('${d.id}')">Update</button>
+                        </div>
                     </div>`;
             });
         });
 
-        window.manualBal = async (id) => {
+        window.setBal = async (id) => {
             const val = parseFloat(document.getElementById('bal-'+id).value);
             if(!isNaN(val)) {
                 await updateDoc(doc(db, "users", id), { wallet: val });
-                alert("Updated!");
+                alert("Balance Updated!");
             }
         };
 
