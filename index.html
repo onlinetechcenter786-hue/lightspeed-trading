@@ -1,202 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAHI | High Performance Trading</title>
-    <style>
-        :root { --primary: linear-gradient(90deg, #6366f1, #a855f7); --bg: #0b0e14; --card: #161b22; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; }
-        .container { max-width: 420px; margin: auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
-        .hidden { display: none !important; }
+<meta charset="UTF-8">
+<title>SAHI | Demo Trading</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* Login Screen (As per Screenshot) */
-        .brand { text-align: center; margin: 40px 0; }
-        .brand h1 { font-size: 36px; letter-spacing: 4px; font-weight: 900; }
-        .hero-text { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 40px; }
-        .google-btn { background: #fff; color: #000; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-
-        /* Dashboard */
-        .wallet-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #30363d; cursor: pointer; margin-bottom: 20px; }
-        .price-val { font-size: 42px; font-weight: 800; text-align: center; margin: 20px 0; }
-        .up { color: #22c55e; } .down { color: #ef4444; }
-        canvas { width: 100%; height: 180px; background: rgba(0,0,0,0.2); border-radius: 10px; }
-
-        /* Modal / Popup */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; border: 1px solid #30363d; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #30363d; background: #000; color: #fff; text-align: center; box-sizing: border-box; }
-
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .buy-btn { background: #22c55e; color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 12px; cursor: pointer; }
-        .sell-btn { background: #ef4444; color: #fff; font-weight: bold; border: none; padding: 15px; border-radius: 12px; cursor: pointer; }
-        
-        #wallet-ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 500; padding: 20px; box-sizing: border-box; }
-    </style>
+<style>
+:root{
+ --bg:#0b0e14;--card:#161b22;
+ --green:#22c55e;--red:#ef4444;--blue:#38bdf8;
+}
+body{margin:0;background:var(--bg);color:#fff;font-family:Segoe UI,sans-serif}
+.container{max-width:420px;margin:auto;padding:20px;min-height:100vh}
+.hidden{display:none!important}
+.card{background:var(--card);border:1px solid #30363d;border-radius:16px;padding:16px;margin-bottom:15px}
+.price{font-size:42px;font-weight:900;text-align:center}
+.up{color:var(--green)}.down{color:var(--red)}
+canvas{width:100%;background:#000;border-radius:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{padding:14px;border:none;border-radius:14px;font-weight:800;cursor:pointer}
+.buy{background:var(--green);color:#000}
+.sell{background:var(--red);color:#fff}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal-box{background:var(--card);padding:25px;border-radius:20px;width:85%}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid #333;background:#000;color:#fff;text-align:center;margin:15px 0}
+.tab-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+</style>
 </head>
+
 <body>
 
-<div id="auth-screen" class="container">
-    <div class="brand"><h1>SAHI</h1><p>F&O | Stocks | ETF | IPO</p></div>
-    <div class="hero-text">High Performance<br>Trading</div>
-    <button class="google-btn" onclick="login()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
-        Continue with Google
-    </button>
+<!-- AUTH -->
+<div id="auth" class="container">
+ <h1 style="text-align:center">SAHI</h1>
+ <p style="text-align:center;opacity:.6">High Performance Trading</p>
+ <button onclick="login()" style="width:100%">Continue with Google</button>
 </div>
 
-<div id="app-screen" class="container hidden">
-    <div class="wallet-card" onclick="toggleWallet(true)">
-        <div style="font-size: 12px; opacity: 0.6;">Available Margin (Manage)</div>
-        <div style="font-size: 24px; font-weight: bold;">₹<span id="bal-display">0.00</span></div>
-    </div>
+<!-- APP -->
+<div id="app" class="container hidden">
 
-    <div class="price-val" id="price-display">₹166.65</div>
-    <canvas id="chartCanvas"></canvas>
-
-    <div class="btn-grid">
-        <button class="buy-btn" onclick="openTrade('buy')">BUY</button>
-        <button class="sell-btn" onclick="openTrade('sell')">SELL</button>
-    </div>
+<div class="tab-btns">
+ <button onclick="switchTab('market')">Market</button>
+ <button onclick="switchTab('history')">History</button>
+ <button onclick="switchTab('leader')">Leaderboard</button>
 </div>
 
-<div id="wallet-ui" class="hidden">
-    <button onclick="toggleWallet(false)" style="background:none; border:1px solid #333; color:#fff; padding:10px; border-radius:8px;">← Back</button>
-    <h2 style="margin-top:30px;">Wallet</h2>
-    <div class="wallet-card">
-        <p>Current Balance: ₹<span id="bal-display-2">0.00</span></p>
-    </div>
-    <div class="btn-grid">
-        <button class="buy-btn" style="background:#38bdf8" onclick="reqMoney('Deposit')">ADD MONEY</button>
-        <button class="sell-btn" style="background:#fff; color:#000" onclick="reqMoney('Withdraw')">WITHDRAW</button>
-    </div>
+<div id="tab-market">
+ <div class="card">
+  Balance ₹<b><span id="bal">0</span></b>
+ </div>
+
+ <div id="price" class="price">₹0.00</div>
+
+ <canvas id="lineChart" width="360" height="120"></canvas>
+ <canvas id="candleChart" width="360" height="200"></canvas>
+
+ <div class="card">
+  Qty: <b><span id="qty">0</span></b><br>
+  Avg: ₹<b><span id="avg">0</span></b><br>
+  P/L: ₹<b><span id="pl">0</span></b>
+ </div>
+
+ <div class="grid">
+  <button class="buy" onclick="openTrade('buy')">BUY</button>
+  <button class="sell" onclick="openTrade('sell')">SELL</button>
+ </div>
 </div>
 
-<div id="trade-modal" class="modal hidden">
-    <div class="modal-content">
-        <h3 id="m-title">BUY LSC</h3>
-        <p style="font-size:12px; opacity:0.6;">Current Price: ₹<span id="m-price">0</span></p>
-        <input type="number" id="t-qty" value="1" min="1">
-        <div class="btn-grid">
-            <button id="m-confirm" class="buy-btn" onclick="confirmTrade()">Confirm</button>
-            <button onclick="closeTrade()" style="background:#333; color:#fff; border:none; border-radius:12px;">Cancel</button>
-        </div>
-    </div>
+<div id="tab-history" class="hidden"></div>
+<div id="tab-leader" class="hidden"></div>
+
+</div>
+
+<!-- MODAL -->
+<div id="trade" class="modal hidden">
+ <div class="modal-box">
+  <h3 id="t-title"></h3>
+  Price ₹<span id="t-price"></span>
+  <input type="number" id="t-qty" value="1" min="1">
+  <div class="grid">
+   <button id="t-confirm"></button>
+   <button onclick="closeTrade()">Cancel</button>
+  </div>
+ </div>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import{getFirestore,doc,getDoc,setDoc,updateDoc,onSnapshot,collection,addDoc,query,where,orderBy,getDocs,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
-        authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
-        projectId: "lightspeed-trading-1dec9",
-        storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
-        messagingSenderId: "787355268629",
-        appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
-    };
+const app=initializeApp({
+ apiKey:"AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+ authDomain:"lightspeed-trading-1dec9.firebaseapp.com",
+ projectId:"lightspeed-trading-1dec9"
+});
+const auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
+let price=166,lastPrice=price,trend=(Math.random()-.5)*.3;
+let line=[],candles=[],cur=null,cStart=0,started=false;
+let user={},mode="buy";
 
-    let price = 166.65;
-    let userData = {};
-    let currentMode = 'buy';
-    let history = JSON.parse(localStorage.getItem('trade_history')) || [];
+window.login=()=>signInWithPopup(auth,provider);
 
-    window.login = () => signInWithPopup(auth, provider);
-    window.toggleWallet = (show) => document.getElementById('wallet-ui').className = show ? '' : 'hidden';
+window.switchTab=t=>{
+ ["market","history","leader"].forEach(x=>document.getElementById("tab-"+x).classList.add("hidden"));
+ document.getElementById("tab-"+t).classList.remove("hidden");
+ if(t==="leader")loadLeaderboard();
+};
 
-    window.openTrade = (mode) => {
-        currentMode = mode;
-        document.getElementById('trade-modal').classList.remove('hidden');
-        document.getElementById('m-title').innerText = mode.toUpperCase() + " LIGHTSPEED";
-        document.getElementById('m-price').innerText = price.toFixed(2);
-        document.getElementById('m-confirm').className = mode + "-btn";
-    };
+window.openTrade=m=>{
+ mode=m;trade.classList.remove("hidden");
+ t-title.innerText=m.toUpperCase();
+ t-price.innerText=price.toFixed(2);
+ t-confirm.innerText=m.toUpperCase();
+ t-confirm.className=m;
+};
 
-    window.closeTrade = () => document.getElementById('trade-modal').classList.add('hidden');
+window.closeTrade=()=>trade.classList.add("hidden");
 
-    window.confirmTrade = async () => {
-        const qty = parseInt(document.getElementById('t-qty').value);
-        const total = price * qty;
-        const uRef = doc(db, "users", auth.currentUser.uid);
+t-confirm.onclick=async()=>{
+ let q=+t-qty.value,total=q*price,ref=doc(db,"users",auth.currentUser.uid);
+ if(mode=="buy"&&user.wallet>=total){
+  let avg=((user.avg*user.qty)+(price*q))/(user.qty+q);
+  await updateDoc(ref,{wallet:user.wallet-total,qty:user.qty+q,avg});
+ }
+ if(mode=="sell"&&user.qty>=q){
+  await updateDoc(ref,{wallet:user.wallet+total,qty:user.qty-q});
+ }
+ await addDoc(collection(db,"trades"),{uid:auth.currentUser.uid,type:mode,qty:q,price,total,time:serverTimestamp()});
+ closeTrade();
+};
 
-        if(currentMode === 'buy' && userData.wallet >= total) {
-            let newAvg = ((userData.holdings * userData.avgPrice) + total) / (userData.holdings + qty);
-            await updateDoc(uRef, { wallet: userData.wallet - total, holdings: userData.holdings + qty, avgPrice: newAvg });
-        } else if(currentMode === 'sell' && userData.holdings >= qty) {
-            await updateDoc(uRef, { wallet: userData.wallet + total, holdings: userData.holdings - qty });
-        } else {
-            alert("Insufficient Funds/Holdings!");
-        }
-        closeTrade();
-    };
+onAuthStateChanged(auth,async u=>{
+ if(!u)return;
+ let ref=doc(db,"users",u.uid);
+ let s=await getDoc(ref);
+ if(!s.exists())await setDoc(ref,{wallet:10000,qty:0,avg:0});
+ auth.classList.add("hidden");app.classList.remove("hidden");
 
-    window.reqMoney = async (type) => {
-        const amt = prompt(`Enter ${type} Amount:`);
-        if(amt && !isNaN(amt)) {
-            await addDoc(collection(db, "requests"), {
-                uid: auth.currentUser.uid,
-                email: auth.currentUser.email,
-                amount: parseFloat(amt),
-                type: type,
-                status: "pending",
-                time: serverTimestamp()
-            });
-            alert("Request sent!");
-        }
-    };
+ onSnapshot(ref,d=>{
+  user=d.data();
+  bal.innerText=user.wallet.toFixed(2);
+  qty.innerText=user.qty;
+  avg.innerText=user.avg.toFixed(2);
+  let p=(price-user.avg)*user.qty;
+  pl.innerText=p.toFixed(2);
+  pl.style.color=p>=0?"#22c55e":"#ef4444";
+ });
+ loadHistory(); startMarket();
+});
 
-    onAuthStateChanged(auth, async (user) => {
-        if(user) {
-            const uRef = doc(db, "users", user.uid);
-            const snap = await getDoc(uRef);
-            if(!snap.exists()) await setDoc(uRef, { wallet: 10000, holdings: 0, avgPrice: 0 });
-            
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
+function startMarket(){
+ if(started)return;started=true;
+ setInterval(()=>{
+  if(Math.random()<.05)trend=(Math.random()-.5)*.6;
+  price+=trend+(Math.random()-.5);
+  price=Math.max(50,Math.min(300,price));
+  render();
+ },3000);
+}
 
-            onSnapshot(uRef, (d) => {
-                userData = d.data();
-                document.getElementById('bal-display').innerText = userData.wallet.toFixed(2);
-                document.getElementById('bal-display-2').innerText = userData.wallet.toFixed(2);
-            });
-            startMarket();
-        }
-    });
+function render(){
+ priceEl.innerText="₹"+price.toFixed(2);
+ priceEl.className="price "+(price>=lastPrice?"up":"down");
+ lastPrice=price;
 
-    function startMarket() {
-        setInterval(() => {
-            price += (Math.random() - 0.5) * 1.5;
-            document.getElementById('price-display').innerText = "₹" + price.toFixed(2);
-            const now = Date.now();
-            history.push({ p: price, t: now });
-            // 3 Day Filter (259200000 ms)
-            history = history.filter(h => now - h.t < 259200000);
-            localStorage.setItem('trade_history', JSON.stringify(history));
-            drawChart();
-        }, 3000);
-    }
+ line.push(price);line=line.slice(-40);
+ updateCandle(price);
+ drawLine();drawCandle();
+}
 
-    function drawChart() {
-        const c = document.getElementById('chartCanvas');
-        const ctx = c.getContext('2d');
-        ctx.clearRect(0,0,c.width,c.height);
-        ctx.beginPath(); ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2;
-        let pArr = history.map(h => h.p);
-        let min = Math.min(...pArr), max = Math.max(...pArr), r = max - min + 1;
-        pArr.slice(-40).forEach((p, i) => {
-            let x = (i/39) * c.width;
-            let y = c.height - ((p-min)/r) * c.height;
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        });
-        ctx.stroke();
-    }
+function updateCandle(p){
+ let now=Date.now();
+ if(!cur){cur={o:p,h:p,l:p,c:p};cStart=now}
+ cur.h=Math.max(cur.h,p);cur.l=Math.min(cur.l,p);cur.c=p;
+ if(now-cStart>60000){candles.push(cur);candles=candles.slice(-30);cur=null}
+}
+
+function drawLine(){
+ let c=lineChart,ctx=c.getContext("2d");
+ ctx.clearRect(0,0,c.width,c.height);
+ let min=Math.min(...line),max=Math.max(...line),r=max-min||1;
+ ctx.beginPath();ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;
+ line.forEach((p,i)=>{
+  let x=i/(line.length-1)*c.width;
+  let y=c.height-((p-min)/r)*c.height;
+  i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+ });ctx.stroke();
+}
+
+function drawCandle(){
+ let c=candleChart,ctx=c.getContext("2d");
+ ctx.clearRect(0,0,c.width,c.height);
+ let all=[...candles];if(cur)all.push(cur);
+ if(!all.length)return;
+ let prices=all.flatMap(x=>[x.h,x.l]);
+ let min=Math.min(...prices),max=Math.max(...prices),r=max-min||1;
+ let w=c.width/all.length;
+ all.forEach((cd,i)=>{
+  let x=i*w+w/2;
+  let yH=c.height-((cd.h-min)/r)*c.height;
+  let yL=c.height-((cd.l-min)/r)*c.height;
+  let yO=c.height-((cd.o-min)/r)*c.height;
+  let yC=c.height-((cd.c-min)/r)*c.height;
+  ctx.strokeStyle=cd.c>=cd.o?"#22c55e":"#ef4444";
+  ctx.beginPath();ctx.moveTo(x,yH);ctx.lineTo(x,yL);ctx.stroke();
+  ctx.fillStyle=ctx.strokeStyle;
+  ctx.fillRect(x-w/4,Math.min(yO,yC),w/2,Math.abs(yO-yC)||2);
+ });
+}
+
+function loadHistory(){
+ onSnapshot(query(collection(db,"trades"),where("uid","==",auth.currentUser.uid),orderBy("time","desc")),s=>{
+  tab-history.innerHTML="";
+  s.forEach(d=>{
+   let t=d.data();
+   tab-history.innerHTML+=`<div class="card">${t.type.toUpperCase()} Qty:${t.qty}<br>₹${t.price.toFixed(2)}</div>`;
+  });
+ });
+}
+
+async function loadLeaderboard(){
+ let snap=await getDocs(collection(db,"users")),arr=[];
+ snap.forEach(d=>{
+  let u=d.data(),eq=u.wallet+(u.qty*price);
+  arr.push(eq);
+ });
+ arr.sort((a,b)=>b-a);
+ tab-leader.innerHTML=arr.slice(0,10).map((e,i)=>`<div class="card">#${i+1} ₹${e.toFixed(2)}</div>`).join("");
+}
 </script>
 </body>
 </html>
