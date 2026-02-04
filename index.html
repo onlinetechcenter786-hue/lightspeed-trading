@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightspeed Trading (LSC)</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #0f172a; --card: #020617; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; }
+        .container { max-width: 420px; margin: auto; padding: 15px; }
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .hidden { display: none !important; }
+        
+        /* UI Elements */
+        .price { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .up { color: #22c55e; } .down { color: #ef4444; }
+        canvas { width: 100%; height: 160px; background: #020617; border-radius: 10px; }
+        .stats { display: flex; justify-content: space-between; margin: 15px 0; font-size: 14px; }
+        
+        /* Buttons */
+        .btns { display: flex; gap: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .buy { background: #22c55e; color: #000; }
+        .sell { background: #ef4444; color: #fff; }
+        .action-btn { background: #334155; color: white; width: 100%; margin-top: 10px; font-size: 12px; }
+
+        /* Input Styles */
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        #recaptcha-container { margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen" class="container">
+    <div class="card">
+        <h2 style="text-align:center">🚀 Lightspeed Login</h2>
+        <div id="phone-step">
+            <input type="tel" id="phone-input" placeholder="+91 9876543210">
+            <div id="recaptcha-container"></div>
+            <button class="buy" style="width:100%" onclick="sendOTP()">Send OTP</button>
+        </div>
+        <div id="otp-step" class="hidden">
+            <input type="text" id="otp-input" placeholder="Enter 6-Digit OTP">
+            <button class="buy" style="width:100%" onclick="verifyOTP()">Verify OTP</button>
+        </div>
+    </div>
+</div>
+
+<div id="app-screen" class="container hidden">
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Wallet: ₹<b id="balance">0.00</b></span>
+            <span id="pl" style="font-size:12px">P/L: ₹0</span>
+        </div>
+        
+        <h2 style="margin:10px 0 0 0">🪙 Lightspeed (LSC)</h2>
+        <div class="price down" id="price">₹166.65</div>
+
+        <canvas id="chart"></canvas>
+
+        <div class="stats">
+            <div>Coins: <span id="coins">0</span></div>
+            <div>Avg: ₹<span id="avg">0</span></div>
+        </div>
+
+        <div class="btns">
+            <button class="buy" onclick="trade('buy')">BUY</button>
+            <button class="sell" onclick="trade('sell')">SELL</button>
+        </div>
+
+        <button class="action-btn" onclick="requestDeposit()">ADD MONEY (Deposit Request)</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // --- YOUR CONFIG ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+        authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
+        projectId: "lightspeed-trading-1dec9",
+        storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
+        messagingSenderId: "787355268629",
+        appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let price = 166.65;
+    let userData = { wallet: 0, holdings: 0, avgPrice: 0 };
+    let prices = [166, 165, 166.65];
+
+    // --- AUTHENTICATION ---
+    window.sendOTP = function() {
+        const phone = document.getElementById('phone-input').value;
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'normal' });
+        signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
+            .then((res) => { 
+                window.confirmationResult = res; 
+                document.getElementById('phone-step').className = 'hidden';
+                document.getElementById('otp-step').className = '';
+            }).catch(err => alert(err.message));
+    }
+
+    window.verifyOTP = function() {
+        const otp = document.getElementById('otp-input').value;
+        confirmationResult.confirm(otp).then(() => location.reload()).catch(() => alert("Wrong OTP"));
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            document.getElementById('auth-screen').className = 'hidden';
+            document.getElementById('app-screen').className = 'container';
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            if(!snap.exists()) {
+                await setDoc(userRef, { wallet: 10000, holdings: 0, avgPrice: 0, phone: user.phoneNumber });
+            }
+            onSnapshot(userRef, (d) => { userData = d.data(); updateUI(); });
+            setInterval(updatePrice, 2000);
+        }
+    });
+
+    // --- TRADING LOGIC ---
+    function updatePrice() {
+        let change = (Math.random() - 0.5) * 3;
+        price += change;
+        if(price < 10) price = 10;
+        prices.push(price);
+        if(prices.length > 30) prices.shift();
+        
+        document.getElementById('price').innerText = "₹" + price.toFixed(2);
+        document.getElementById('price').className = "price " + (change >= 0 ? "up" : "down");
+        drawChart();
+        updatePL();
+    }
+
+    window.trade = async function(type) {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        if(type === 'buy' && userData.wallet >= price) {
+            let newAvg = ((userData.holdings * userData.avgPrice) + price) / (userData.holdings + 1);
+            await updateDoc(userRef, {
+                wallet: userData.wallet - price,
+                holdings: userData.holdings + 1,
+                avgPrice: newAvg
+            });
+        } else if(type === 'sell' && userData.holdings > 0) {
+            await updateDoc(userRef, {
+                wallet: userData.wallet + price,
+                holdings: userData.holdings - 1,
+                avgPrice: userData.holdings === 1 ? 0 : userData.avgPrice
+            });
+        }
+    }
+
+    window.requestDeposit = async function() {
+        const amt = prompt("Enter Amount to Deposit:");
+        if(amt) {
+            await addDoc(collection(db, "requests"), {
+                uid: auth.currentUser.uid,
+                phone: auth.currentUser.phoneNumber,
+                amount: parseFloat(amt),
+                status: "pending",
+                time: serverTimestamp()
+            });
+            alert("Deposit request sent to Admin!");
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('balance').innerText = userData.wallet.toFixed(2);
+        document.getElementById('coins').innerText = userData.holdings;
+        document.getElementById('avg').innerText = userData.avgPrice.toFixed(2);
+    }
+
+    function updatePL() {
+        let pl = (price - userData.avgPrice) * userData.holdings;
+        const el = document.getElementById('pl');
+        el.innerText = "P/L: ₹" + pl.toFixed(2);
+        el.style.color = pl >= 0 ? "#22c55e" : "#ef4444";
+    }
+
+    function drawChart() {
+        const c = document.getElementById('chart');
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0,0,c.width,c.height);
+        ctx.beginPath();
+        ctx.strokeStyle = "#38bdf8";
+        let min = Math.min(...prices), max = Math.max(...prices), r = max - min + 1;
+        prices.forEach((p, i) => {
+            let x = (i/(prices.length-1)) * c.width;
+            let y = c.height - ((p-min)/r) * c.height;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+    }
+</script>
+</body>
+</html>
