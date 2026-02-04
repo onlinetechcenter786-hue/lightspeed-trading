@@ -3,164 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAHI Admin | Control Panel</title>
+    <title>SAHI Admin | Full Control</title>
     <style>
         :root { --bg: #0b0e14; --card: #161b22; --primary: #6366f1; --success: #22c55e; --danger: #ef4444; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; display: none; }
         .header { border-bottom: 1px solid #30363d; padding-bottom: 15px; margin-bottom: 30px; }
+        .section-title { font-size: 18px; color: var(--primary); margin: 20px 0 10px 0; border-left: 4px solid var(--primary); padding-left: 10px; }
         
-        .section-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: var(--primary); }
+        .req-card, .user-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Request Cards */
-        .req-card { 
-            background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 15px; 
-            border: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; 
-        }
-        .req-info b { font-size: 16px; display: block; margin-bottom: 5px; }
-        .req-info span { font-size: 13px; opacity: 0.6; }
-        .type-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
-        .deposit { background: rgba(34, 197, 94, 0.2); color: var(--success); }
-        .withdraw { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-
-        /* Controls */
-        .market-box { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 30px; }
-        .btn-group { display: flex; gap: 10px; }
-        
-        button { 
-            padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; 
-            font-weight: bold; transition: 0.3s; 
-        }
+        button { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-approve { background: var(--success); color: #000; }
-        .btn-approve:hover { opacity: 0.8; }
-        .btn-control { background: #30363d; color: white; }
-        .btn-up { background: var(--success); color: black; }
-        .btn-down { background: var(--danger); color: white; }
-
-        .loading { text-align: center; padding: 20px; opacity: 0.5; }
+        .btn-edit { background: var(--primary); color: white; }
+        
+        .user-info b { font-size: 14px; }
+        .user-info span { font-size: 12px; opacity: 0.6; display: block; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🛠️ SAHI Admin Panel</h1>
-    </div>
-
-    <div class="market-box">
-        <div class="section-title">📈 Market Price Control</div>
-        <p style="font-size: 14px; opacity: 0.7;">Yahan se aap Lightspeed (LSC) ki price movement ko control kar sakte hain.</p>
-        <div class="btn-group">
-            <button class="btn-control btn-up" onclick="setTrend('up')">Push Price UP 🚀</button>
-            <button class="btn-control btn-down" onclick="setTrend('down')">Push Price DOWN 📉</button>
-            <button class="btn-control" onclick="setTrend('normal')">Normal (Random)</button>
-        </div>
+        <h1>🛠️ SAHI Pro Admin</h1>
     </div>
 
     <div class="section-title">📥 Pending Wallet Requests</div>
-    <div id="request-list">
-        <div class="loading">Fetching requests...</div>
-    </div>
+    <div id="request-list"><small>Loading...</small></div>
+
+    <div class="section-title">👥 User Management (Manual Edit)</div>
+    <div id="user-list"><small>Loading users...</small></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // --- 1. PASSWORD PROTECTION ---
+        const SECRET_PASSWORD = "YOUR_ADMIN_PASSWORD"; // <-- Apna Password Yahan Badlein
+        const access = prompt("Admin Secret Password:");
+        if (access !== SECRET_PASSWORD) {
+            alert("Unauthorized!");
+            window.location.href = "index.html";
+        } else {
+            document.body.style.display = "block";
+        }
 
-        // Your Web App's Firebase configuration
+        // --- 2. FIREBASE CONFIG ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
             authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
             projectId: "lightspeed-trading-1dec9",
             storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
             messagingSenderId: "787355268629",
-            appId: "1:787355268629:web:c5c39b7706c6a3548e001c",
-            measurementId: "G-BMG3R0GB2T"
+            appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- 1. LIVE REQUESTS TRACKER ---
-        const q = query(collection(db, "requests"), where("status", "==", "pending"));
-        
-        onSnapshot(q, (snapshot) => {
-            const listDiv = document.getElementById('request-list');
-            if (snapshot.empty) {
-                listDiv.innerHTML = '<div class="loading">Abhi koi pending request nahi hai.</div>';
-                return;
-            }
-
-            listDiv.innerHTML = "";
-            snapshot.forEach((requestDoc) => {
-                const data = requestDoc.data();
-                const div = document.createElement('div');
-                div.className = 'req-card';
-                
-                const badgeClass = data.type === 'Deposit' ? 'deposit' : 'withdraw';
-                
-                div.innerHTML = `
-                    <div class="req-info">
-                        <span class="type-badge ${badgeClass}">${data.type.toUpperCase()}</span>
-                        <b>${data.email || 'Unknown User'}</b>
-                        <span>Amount: ₹${data.amount}</span>
-                    </div>
-                    <button class="btn-approve" onclick="approveRequest('${requestDoc.id}', '${data.uid}', ${data.amount}, '${data.type}')">
-                        Approve ✅
-                    </button>
-                `;
-                listDiv.appendChild(div);
+        // --- 3. SYNC REQUESTS ---
+        const qReq = query(collection(db, "requests"), where("status", "==", "pending"));
+        onSnapshot(qReq, (snap) => {
+            const div = document.getElementById('request-list');
+            div.innerHTML = snap.empty ? "<small>No pending requests.</small>" : "";
+            snap.forEach(d => {
+                const r = d.data();
+                div.innerHTML += `
+                    <div class="req-card">
+                        <div class="user-info"><b>${r.email}</b><span>${r.type}: ₹${r.amount}</span></div>
+                        <button class="btn-approve" onclick="approveReq('${d.id}','${r.uid}',${r.amount},'${r.type}')">Approve</button>
+                    </div>`;
             });
         });
 
-        // --- 2. APPROVE ACTION ---
-        window.approveRequest = async (docId, userId, amount, type) => {
-            try {
-                const userRef = doc(db, "users", userId);
-                const userSnap = await getDoc(userRef);
-                
-                if (!userSnap.exists()) {
-                    alert("User data nahi mila!");
-                    return;
-                }
+        // --- 4. SYNC USER LIST ---
+        onSnapshot(collection(db, "users"), (snap) => {
+            const div = document.getElementById('user-list');
+            div.innerHTML = "";
+            snap.forEach(d => {
+                const u = d.data();
+                div.innerHTML += `
+                    <div class="user-card">
+                        <div class="user-info"><b>${u.name || 'User'}</b><span>Bal: ₹${u.wallet.toFixed(2)} | Hold: ${u.holdings}</span></div>
+                        <button class="btn-edit" onclick="manualEdit('${d.id}', ${u.wallet})">Edit Bal</button>
+                    </div>`;
+            });
+        });
 
-                const currentWallet = userSnap.data().wallet || 0;
-                let newBalance;
-
-                if (type === 'Deposit') {
-                    newBalance = currentWallet + amount;
-                } else {
-                    if (currentWallet < amount) {
-                        alert("User ke paas itna balance nahi hai!");
-                        return;
-                    }
-                    newBalance = currentWallet - amount;
-                }
-
-                // Update Wallet in User Doc
-                await updateDoc(userRef, { wallet: newBalance });
-
-                // Update Request Status
-                await updateDoc(doc(db, "requests", docId), { status: "approved" });
-
-                alert(`Request Approved! Naya Balance: ₹${newBalance}`);
-            } catch (error) {
-                console.error("Error approving request:", error);
-                alert("Action failed: " + error.message);
-            }
+        // --- 5. ACTIONS ---
+        window.approveReq = async (id, uid, amt, type) => {
+            const uRef = doc(db, "users", uid);
+            const snap = await getDoc(uRef);
+            let newBal = type === 'Deposit' ? snap.data().wallet + amt : snap.data().wallet - amt;
+            await updateDoc(uRef, { wallet: newBal });
+            await updateDoc(doc(db, "requests", id), { status: "approved" });
+            alert("Approved!");
         };
 
-        // --- 3. MARKET TREND CONTROL ---
-        window.setTrend = async (trendValue) => {
-            try {
-                // Settings collection mein market trend save karein
-                // Note: Iska logic index.html mein bhi hona chahiye trend padhne ke liye
-                await updateDoc(doc(db, "settings", "market"), { trend: trendValue });
-                alert("Market Trend set to: " + trendValue);
-            } catch (e) {
-                // Agar document nahi hai toh create karein
-                alert("Pehle Firestore mein 'settings' collection aur 'market' doc banayein.");
+        window.manualEdit = async (uid, oldBal) => {
+            const newBal = prompt("Naya Balance daalein (Current: ₹"+oldBal+")", oldBal);
+            if(newBal !== null) {
+                await updateDoc(doc(db, "users", uid), { wallet: parseFloat(newBal) });
+                alert("Balance Updated!");
             }
         };
-
     </script>
 </body>
 </html>
