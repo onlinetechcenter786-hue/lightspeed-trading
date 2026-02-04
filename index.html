@@ -1,294 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>SAHI | High Performance Trading</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAHI Pro | Trading</title>
+    <style>
+        :root { --bg: #0b0e14; --card: #161b22; --primary: #38bdf8; --green: #22c55e; --red: #ef4444; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: white; }
+        .container { max-width: 420px; margin: auto; padding: 20px; }
+        .hidden { display: none !important; }
+        
+        /* Glassmorphism Card Style */
+        .glass-card { 
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-<style>
-:root{
- --bg:#0b0e14;--card:#161b22;
- --green:#22c55e;--red:#ef4444;--blue:#38bdf8;
-}
-body{margin:0;background:var(--bg);color:#fff;font-family:'Segoe UI',sans-serif; overflow-x: hidden;}
-.container{max-width:420px;margin:auto;padding:20px;min-height:100vh}
-.hidden{display:none!important}
-.card{background:var(--card);border:1px solid #30363d;border-radius:16px;padding:16px;margin-bottom:15px}
-.price{font-size:42px;font-weight:900;text-align:center; transition: 0.3s;}
-.up{color:var(--green)}.down{color:var(--red)}
-canvas{width:100%;background:rgba(0,0,0,0.3);border-radius:12px; margin-bottom: 10px;}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-button{padding:14px;border:none;border-radius:14px;font-weight:800;cursor:pointer; transition: 0.2s;}
-button:active{transform: scale(0.95);}
-.buy{background:var(--green);color:#000}
-.sell{background:var(--red);color:#fff}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:999}
-.modal-box{background:var(--card);padding:25px;border-radius:20px;width:85%; border: 1px solid #333;}
-input{width:100%;padding:14px;border-radius:12px;border:1px solid #333;background:#000;color:#fff;text-align:center;margin:15px 0; box-sizing: border-box;}
-.tab-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px}
-.tab-btns button { background: #30363d; color: #fff; padding: 10px; font-size: 12px;}
-</style>
+        /* Header & Profile */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 35px; height: 35px; background: var(--primary); border-radius: 50%; display: grid; place-items: center; font-weight: bold; }
+        .logout-btn { background: none; border: 1px solid #333; color: #666; padding: 5px 12px; border-radius: 8px; cursor: pointer; }
+
+        /* Price & Chart */
+        .symbol { font-size: 18px; opacity: 0.7; }
+        .price-main { font-size: 38px; font-weight: 800; margin: 5px 0; }
+        .change { font-size: 16px; font-weight: 600; }
+        canvas { width: 100%; height: 160px; margin: 20px 0; }
+
+        /* Tabs */
+        .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #1e293b; border: none; color: #94a3b8; padding: 10px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .tab-btn.active { background: var(--primary); color: #000; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; }
+        .stat-item { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; }
+        .stat-val { display: block; font-size: 18px; font-weight: bold; margin-top: 5px; }
+
+        /* Action Buttons */
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .btn { padding: 16px; border: none; border-radius: 18px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .btn-buy { background: var(--green); color: #000; }
+        .btn-sell { background: var(--red); color: #fff; }
+        .btn:active { transform: scale(0.95); }
+
+        /* Login Screen */
+        .login-screen { text-align: center; padding-top: 100px; }
+        .google-login { background: white; color: black; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; border: none; margin-top: 40px; }
+    </style>
 </head>
-
 <body>
 
-<div id="auth-screen" class="container">
- <h1 style="text-align:center; margin-top: 100px; letter-spacing: 5px;">SAHI</h1>
- <p style="text-align:center;opacity:.6">High Performance Trading</p>
- <button onclick="login()" style="width:100%; background: #fff; color: #000; margin-top: 50px;">Continue with Google</button>
+<div id="auth-page" class="container login-screen">
+    <h1 style="letter-spacing: 4px;">SAHI</h1>
+    <p style="opacity: 0.6;">High Performance Trading</p>
+    <button class="google-login" onclick="login()">Continue with Google</button>
 </div>
 
-<div id="app-screen" class="container hidden">
+<div id="app-page" class="container hidden">
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar" id="user-initial">U</div>
+            <div style="font-size: 14px;">Hi, <b id="user-name">Trader</b></div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
 
-<div class="tab-btns">
- <button onclick="switchTab('market')">Market</button>
- <button onclick="switchTab('history')">History</button>
- <button onclick="switchTab('leader')">Leaderboard</button>
-</div>
+    <div class="glass-card">
+        <div class="symbol">Lightspeed / INR <span style="background:orange; color:black; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:10px;">LSC</span></div>
+        <div class="price-main" id="price-val">₹0.00</div>
+        <div class="change" id="price-change">+₹0.00 (0.00%)</div>
+        <canvas id="proChart"></canvas>
+    </div>
 
-<div id="tab-market">
- <div class="card">
-  Balance: ₹<b><span id="bal-display">0</span></b>
- </div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('market')">Market</button>
+        <button class="tab-btn" onclick="showTab('history')">History</button>
+        <button class="tab-btn" onclick="showTab('leader')">Rank</button>
+    </div>
 
- <div id="price-display" class="price">₹166.00</div>
+    <div id="market-sec">
+        <div class="glass-card stats-grid">
+            <div class="stat-item">
+                <span style="opacity:0.6;">Wallet Balance</span>
+                <span class="stat-val">₹<span id="stat-bal">0.00</span></span>
+            </div>
+            <div class="stat-item">
+                <span style="opacity:0.6;">Holdings</span>
+                <span class="stat-val"><span id="stat-qty">0</span> LSC</span>
+            </div>
+            <div class="stat-item">
+                <span style="opacity:0.6;">Avg Price</span>
+                <span class="stat-val">₹<span id="stat-avg">0.00</span></span>
+            </div>
+            <div class="stat-item">
+                <span style="opacity:0.6;">Unrealized P/L</span>
+                <span class="stat-val" id="stat-pl">₹0.00</span>
+            </div>
+        </div>
 
- <p style="font-size: 10px; opacity: 0.5; margin-bottom: 5px;">LIVE TICK CHART</p>
- <canvas id="lineChart" width="360" height="100"></canvas>
- <p style="font-size: 10px; opacity: 0.5; margin-bottom: 5px;">CANDLESTICK (1m)</p>
- <canvas id="candleChart" width="360" height="180"></canvas>
+        <div class="actions">
+            <button class="btn btn-sell" onclick="openTrade('sell')">Sell · Short</button>
+            <button class="btn btn-buy" onclick="openTrade('buy')">Buy · Long</button>
+        </div>
+    </div>
 
- <div class="card">
-  Holdings: <b><span id="hold-qty">0</span></b><br>
-  Avg Price: ₹<b><span id="hold-avg">0</span></b><br>
-  Live P/L: <b><span id="hold-pl">₹0.00</span></b>
- </div>
-
- <div class="grid">
-  <button class="buy" onclick="openTrade('buy')">BUY</button>
-  <button class="sell" onclick="openTrade('sell')">SELL</button>
- </div>
-</div>
-
-<div id="tab-history" class="hidden"></div>
-<div id="tab-leader" class="hidden"></div>
-
-</div>
-
-<div id="trade-modal" class="modal hidden">
- <div class="modal-box">
-  <h3 id="modal-title">TRADE</h3>
-  Current Price: ₹<span id="modal-price">0.00</span>
-  <input type="number" id="modal-qty" value="1" min="1">
-  <div class="grid">
-   <button id="modal-confirm-btn" onclick="executeTrade()"></button>
-   <button onclick="closeTrade()" style="background:#333; color:#fff">Cancel</button>
-  </div>
- </div>
+    <div id="history-sec" class="hidden"></div>
+    <div id="leader-sec" class="hidden"></div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
- apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
- authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
- projectId: "lightspeed-trading-1dec9",
- storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
- messagingSenderId: "787355268629",
- appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+        authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
+        projectId: "lightspeed-trading-1dec9",
+        storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
+        messagingSenderId: "787355268629",
+        appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
+    };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
 
-let price = 166.00, lastPrice = price, trend = (Math.random() - 0.5) * 0.3;
-let lineData = [], candles = [], currentCandle = null, candleStart = 0, marketStarted = false;
-let userData = {}, tradeMode = "buy";
+    let price = 163.10, lastPrice = 160.00;
+    let userData = { wallet: 0, qty: 0, avg: 0 };
+    let chartData = [];
 
-window.login = () => signInWithPopup(auth, provider);
+    // --- AUTH LOGIC ---
+    window.login = () => signInWithPopup(auth, provider).catch(e => alert("Error: Use Google Login Only"));
+    window.logout = () => signOut(auth).then(() => location.reload());
 
-window.switchTab = (t) => {
- ["market", "history", "leader"].forEach(x => document.getElementById("tab-" + x).classList.add("hidden"));
- document.getElementById("tab-" + t).classList.remove("hidden");
- if (t === "leader") loadLeaderboard();
-};
+    onAuthStateChanged(auth, async (u) => {
+        if (u) {
+            document.getElementById('auth-page').classList.add('hidden');
+            document.getElementById('app-page').classList.remove('hidden');
+            
+            // Set User Identity
+            document.getElementById('user-name').innerText = u.displayName || "Trader";
+            document.getElementById('user-initial').innerText = (u.displayName || "U").charAt(0);
 
-window.openTrade = (m) => {
- tradeMode = m;
- document.getElementById("trade-modal").classList.remove("hidden");
- document.getElementById("modal-title").innerText = m.toUpperCase() + " LSC";
- document.getElementById("modal-price").innerText = price.toFixed(2);
- let btn = document.getElementById("modal-confirm-btn");
- btn.innerText = "CONFIRM " + m.toUpperCase();
- btn.className = m;
-};
+            const uRef = doc(db, "users", u.uid);
+            const snap = await getDoc(uRef);
+            if (!snap.exists()) await setDoc(uRef, { wallet: 10000, qty: 0, avg: 0, name: u.displayName });
 
-window.closeTrade = () => document.getElementById("trade-modal").classList.add("hidden");
+            onSnapshot(uRef, (d) => {
+                userData = d.data();
+                // Fix NaN issues with default values
+                document.getElementById('stat-bal').innerText = (userData.wallet || 0).toFixed(2);
+                document.getElementById('stat-qty').innerText = userData.qty || 0;
+                document.getElementById('stat-avg').innerText = (userData.avg || 0).toFixed(2);
+                updatePL();
+            });
+            startMarket();
+            loadHistory();
+        }
+    });
 
-window.executeTrade = async () => {
- let q = parseInt(document.getElementById("modal-qty").value);
- if(q <= 0 || isNaN(q)) return alert("Invalid Qty");
- 
- let total = q * price;
- let ref = doc(db, "users", auth.currentUser.uid);
+    // --- MARKET LOGIC ---
+    function startMarket() {
+        setInterval(() => {
+            lastPrice = price;
+            price += (Math.random() - 0.5) * 2;
+            renderMarket();
+        }, 3000);
+    }
 
- if (tradeMode == "buy") {
-  if(userData.wallet < total) return alert("Insufficient Balance");
-  let newQty = userData.qty + q;
-  let newAvg = ((userData.avg * userData.qty) + (price * q)) / newQty;
-  await updateDoc(ref, { wallet: userData.wallet - total, qty: newQty, avg: newAvg });
- } else {
-  if(userData.qty < q) return alert("Insufficient Qty");
-  await updateDoc(ref, { wallet: userData.wallet + total, qty: userData.qty - q });
- }
- 
- await addDoc(collection(db, "trades"), {
-  uid: auth.currentUser.uid,
-  type: tradeMode,
-  qty: q,
-  price: price,
-  time: serverTimestamp()
- });
- closeTrade();
-};
+    function renderMarket() {
+        const pVal = document.getElementById('price-val');
+        pVal.innerText = "₹" + price.toFixed(2);
+        pVal.className = "price-main " + (price >= lastPrice ? "up" : "down");
+        
+        const diff = price - 160.00; // Starting base price for change calculation
+        const perc = (diff / 160) * 100;
+        document.getElementById('price-change').innerText = `${diff >= 0 ? '+' : ''}₹${diff.toFixed(2)} (${perc.toFixed(2)}%)`;
+        document.getElementById('price-change').style.color = diff >= 0 ? "var(--green)" : "var(--red)";
 
-onAuthStateChanged(auth, async (u) => {
- if (!u) return;
- let ref = doc(db, "users", u.uid);
- let s = await getDoc(ref);
- if (!s.exists()) await setDoc(ref, { wallet: 10000, qty: 0, avg: 0, name: u.displayName });
- 
- document.getElementById("auth-screen").classList.add("hidden");
- document.getElementById("app-screen").classList.remove("hidden");
+        chartData.push(price);
+        if (chartData.length > 30) chartData.shift();
+        drawChart();
+        updatePL();
+    }
 
- onSnapshot(ref, d => {
-  userData = d.data();
-  document.getElementById("bal-display").innerText = userData.wallet.toFixed(2);
-  document.getElementById("hold-qty").innerText = userData.qty;
-  document.getElementById("hold-avg").innerText = userData.avg.toFixed(2);
-  updatePL();
- });
- loadHistory(); 
- if(!marketStarted) startMarket();
-});
+    function updatePL() {
+        const pl = (price - (userData.avg || 0)) * (userData.qty || 0);
+        const el = document.getElementById('stat-pl');
+        el.innerText = (pl >= 0 ? "+" : "") + "₹" + pl.toFixed(2);
+        el.style.color = pl >= 0 ? "var(--green)" : "var(--red)";
+    }
 
-function updatePL(){
-  let p = (price - userData.avg) * userData.qty;
-  let el = document.getElementById("hold-pl");
-  el.innerText = "₹" + p.toFixed(2);
-  el.style.color = p >= 0 ? "#22c55e" : "#ef4444";
-}
+    // --- CHART ---
+    function drawChart() {
+        const c = document.getElementById('proChart');
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0,0,c.width,c.height);
+        
+        const min = Math.min(...chartData), max = Math.max(...chartData), range = max - min || 1;
+        ctx.beginPath();
+        ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 3;
+        ctx.shadowBlur = 10; ctx.shadowColor = "#38bdf8";
 
-function startMarket() {
- marketStarted = true;
- setInterval(() => {
-  if (Math.random() < 0.1) trend = (Math.random() - 0.5) * 0.5;
-  price += trend + (Math.random() - 0.5);
-  price = Math.max(50, Math.min(500, price));
-  renderUI();
- }, 2000);
-}
+        chartData.forEach((p, i) => {
+            const x = (i / (chartData.length - 1)) * c.width;
+            const y = c.height - ((p - min) / range) * c.height;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    }
 
-function renderUI() {
- let pEl = document.getElementById("price-display");
- pEl.innerText = "₹" + price.toFixed(2);
- pEl.className = "price " + (price >= lastPrice ? "up" : "down");
- lastPrice = price;
+    // --- TABS ---
+    window.showTab = (tab) => {
+        ['market', 'history', 'leader'].forEach(t => {
+            document.getElementById(t + '-sec').classList.add('hidden');
+        });
+        document.getElementById(tab + '-sec').classList.remove('hidden');
+    }
 
- lineData.push(price); 
- if(lineData.length > 40) lineData.shift();
- 
- updateCandleData(price);
- drawLineChart();
- drawCandleChart();
- updatePL();
-}
+    // --- TRADING ---
+    window.openTrade = async (mode) => {
+        const qty = prompt(`Enter quantity to ${mode}:`, "1");
+        if (!qty || isNaN(qty)) return;
+        const q = parseInt(qty);
+        const total = q * price;
+        const uRef = doc(db, "users", auth.currentUser.uid);
 
-function updateCandleData(p) {
- let now = Date.now();
- if (!currentCandle) {
-  currentCandle = { o: p, h: p, l: p, c: p };
-  candleStart = now;
- }
- currentCandle.h = Math.max(currentCandle.h, p);
- currentCandle.l = Math.min(currentCandle.l, p);
- currentCandle.c = p;
- 
- if (now - candleStart > 60000) { // 1 Minute Candle
-  candles.push(currentCandle);
-  if(candles.length > 30) candles.shift();
-  currentCandle = null;
- }
-}
+        if (mode === 'buy' && userData.wallet >= total) {
+            const newQty = (userData.qty || 0) + q;
+            const newAvg = (((userData.avg || 0) * (userData.qty || 0)) + (price * q)) / newQty;
+            await updateDoc(uRef, { wallet: userData.wallet - total, qty: newQty, avg: newAvg });
+        } else if (mode === 'sell' && userData.qty >= q) {
+            await updateDoc(uRef, { wallet: userData.wallet + total, qty: userData.qty - q });
+        } else {
+            alert("Transaction Failed: Check balance/holdings");
+        }
+        
+        await addDoc(collection(db, "trades"), {
+            uid: auth.currentUser.uid,
+            type: mode, qty: q, price: price, time: serverTimestamp()
+        });
+    }
 
-function drawLineChart() {
- let c = document.getElementById("lineChart"), ctx = c.getContext("2d");
- ctx.clearRect(0, 0, c.width, c.height);
- if(lineData.length < 2) return;
- 
- let min = Math.min(...lineData), max = Math.max(...lineData), r = max - min || 1;
- ctx.beginPath(); ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 2;
- lineData.forEach((p, i) => {
-  let x = i / (lineData.length - 1) * c.width;
-  let y = c.height - ((p - min) / r) * c.height;
-  if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
- });
- ctx.stroke();
-}
-
-function drawCandleChart() {
- let c = document.getElementById("candleChart"), ctx = c.getContext("2d");
- ctx.clearRect(0, 0, c.width, c.height);
- let all = [...candles]; if (currentCandle) all.push(currentCandle);
- if (!all.length) return;
-
- let prices = all.flatMap(x => [x.h, x.l]);
- let min = Math.min(...prices), max = Math.max(...prices), r = (max - min) || 1;
- let w = c.width / 30; // Fixed width for 30 candles
-
- all.forEach((cd, i) => {
-  let x = i * w + w / 2;
-  let yH = c.height - ((cd.h - min) / r) * c.height;
-  let yL = c.height - ((cd.l - min) / r) * c.height;
-  let yO = c.height - ((cd.o - min) / r) * c.height;
-  let yC = c.height - ((cd.c - min) / r) * c.height;
-  
-  ctx.strokeStyle = cd.c >= cd.o ? "#22c55e" : "#ef4444";
-  ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
-  ctx.fillStyle = ctx.strokeStyle;
-  ctx.fillRect(x - w / 4, Math.min(yO, yC), w / 2, Math.abs(yO - yC) || 2);
- });
-}
-
-function loadHistory() {
- const qH = query(collection(db, "trades"), where("uid", "==", auth.currentUser.uid), orderBy("time", "desc"));
- onSnapshot(qH, s => {
-  let hDiv = document.getElementById("tab-history");
-  hDiv.innerHTML = "<h3 style='margin-left:10px'>Trade History</h3>";
-  s.forEach(d => {
-   let t = d.data();
-   hDiv.innerHTML += `<div class="card" style="border-left: 5px solid ${t.type=='buy'?'#22c55e':'#ef4444'}">
-    <b>${t.type.toUpperCase()}</b> - Qty: ${t.qty}<br>Price: ₹${t.price.toFixed(2)}
-   </div>`;
-  });
- });
-}
-
-async function loadLeaderboard() {
- let snap = await getDocs(collection(db, "users"));
- let arr = [];
- snap.forEach(d => {
-  let u = d.data();
-  let equity = u.wallet + (u.qty * price);
-  arr.push({ name: u.name || "Trader", eq: equity });
- });
- arr.sort((a, b) => b.eq - a.eq);
- document.getElementById("tab-leader").innerHTML = "<h3 style='margin-left:10px'>Top 10 Traders</h3>" + 
-  arr.slice(0, 10).map((e, i) => `<div class="card">#${i + 1} ${e.name} <span style="float:right">₹${e.eq.toFixed(2)}</span></div>`).join("");
-}
+    function loadHistory() {
+        const q = query(collection(db, "trades"), where("uid", "==", auth.currentUser.uid), orderBy("time", "desc"));
+        onSnapshot(q, (s) => {
+            const hSec = document.getElementById('history-sec');
+            hSec.innerHTML = "<h3 style='margin:10px 0'>Trade History</h3>";
+            s.forEach(d => {
+                const t = d.data();
+                hSec.innerHTML += `<div class="glass-card" style="padding:12px; margin-bottom:10px; border-left:4px solid ${t.type == 'buy' ? 'var(--green)' : 'var(--red)'}">
+                    <b>${t.type.toUpperCase()} ${t.qty} LSC</b> <span style="float:right; opacity:0.5;">₹${t.price.toFixed(2)}</span>
+                </div>`;
+            });
+        });
+    }
 </script>
 </body>
 </html>
