@@ -3,73 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAHI Pro | Trading</title>
+    <title>Lightspeed Trading</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #0b0e14; --card: #161b22; --primary: #38bdf8; --green: #22c55e; --red: #ef4444; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: white; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 420px; margin: auto; padding: 15px; min-height: 100vh; display: flex; flex-direction: column; }
         .hidden { display: none !important; }
-        .glass-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 18px; margin-bottom: 15px; }
-        .price-big { font-size: 38px; font-weight: 800; margin: 5px 0; }
-        .tab-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .tab-btn { background: #1e293b; border: none; color: #94a3b8; padding: 12px; border-radius: 12px; cursor: pointer; }
+        
+        /* Glassmorphism UI */
+        .glass-card { background: var(--card); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        .u-avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: grid; place-items: center; font-weight: bold; color: #000; }
+        
+        .price-text { font-size: 42px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
+        .chart-box { height: 180px; width: 100%; margin: 15px 0; }
+
+        /* Tabs */
+        .tab-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #1e293b; border: none; color: #94a3b8; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { background: var(--primary); color: #000; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; }
-        .btn { padding: 16px; border: none; border-radius: 15px; font-weight: 800; cursor: pointer; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-item { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 18px; font-size: 14px; }
+        .stat-item b { font-size: 18px; display: block; margin-top: 5px; }
+
+        /* Action Buttons */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: auto; padding-bottom: 20px; }
+        .btn { padding: 18px; border: none; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; }
         .buy { background: var(--green); color: #000; }
         .sell { background: var(--red); color: #fff; }
-        #chart-wrap { height: 200px; width: 100%; margin: 10px 0; }
     </style>
 </head>
 <body>
 
-<div id="login-page" class="container" style="justify-content:center; text-align:center;">
-    <h1 style="letter-spacing:5px;">SAHI</h1>
-    <button onclick="login()" style="width:100%; padding:15px; border-radius:15px; font-weight:bold; cursor:pointer;">Continue with Google</button>
+<div id="login-page" class="container" style="justify-content: center; text-align: center;">
+    <h1 style="font-size: 50px; letter-spacing: 4px;">SAHI</h1>
+    <p style="opacity: 0.5; margin-top: -15px;">Lightspeed Pro Trading</p>
+    <button onclick="login()" style="width: 100%; padding: 18px; border-radius: 18px; font-weight: bold; margin-top: 50px; cursor: pointer; background: white; border: none;">Login with Google</button>
 </div>
 
 <div id="app-page" class="container hidden">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div id="u-pfp" style="width:35px; height:35px; background:var(--primary); border-radius:50%; display:grid; place-items:center; color:black; font-weight:bold;">U</div>
-            <div id="u-name">Trader</div>
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div id="u-initial" class="u-avatar">?</div>
+            <div>Hi, <b id="u-display-name">Trader</b></div>
         </div>
-        <button onclick="logout()" style="background:none; border:none; color:#666; cursor:pointer;">Logout</button>
+        <button onclick="logout()" style="background:#1e293b; color:#ccc; border:none; padding:8px 15px; border-radius:10px; cursor:pointer;">Logout</button>
     </div>
 
-    <div class="glass-card">
-        <div style="opacity:0.6; font-size:12px;">Lightspeed / INR</div>
-        <div id="price-val" class="price-big">₹0.00</div>
-        <div id="price-change" style="font-size:14px;">+0.00%</div>
-        <div id="chart-wrap"><canvas id="liveChart"></canvas></div>
-    </div>
-
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('market')">Market</button>
-        <button class="tab-btn" onclick="switchTab('history')">History</button>
-        <button class="tab-btn" onclick="switchTab('wallet')">Wallet</button>
-    </div>
-
-    <div id="market-sec">
-        <div class="glass-card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center;">
-            <div style="border-right:1px solid #333;">Balance<br><b id="ui-bal">₹0.00</b></div>
-            <div>Holdings<br><b id="ui-qty">0 LSC</b></div>
-        </div>
-        <div class="btn-group">
-            <button class="btn sell" onclick="trade('sell')">SELL</button>
-            <button class="btn buy" onclick="trade('buy')">BUY</button>
-        </div>
-    </div>
-
-    <div id="history-sec" class="hidden"></div>
-    <div id="wallet-sec" class="hidden">
+    <div id="market-section">
         <div class="glass-card">
-            <h3>Add/Withdraw Funds</h3>
-            <input type="number" id="w-amt" placeholder="Amount" style="width:100%; padding:12px; border-radius:10px; background:#000; border:1px solid #333; color:white;">
-            <div class="btn-group" style="margin-top:15px;">
-                <button class="btn buy" onclick="fundReq('Deposit')">Deposit</button>
-                <button class="btn sell" onclick="fundReq('Withdraw')">Withdraw</button>
+            <div style="font-size:14px; opacity:0.6;">Lightspeed / INR <span style="background:orange; color:black; font-size:10px; padding:2px 4px; border-radius:4px; margin-left:5px;">LSC</span></div>
+            <div id="price-val" class="price-text">₹0.00</div>
+            <div id="price-change" style="font-weight:bold;">+0.00%</div>
+            <div class="chart-box"><canvas id="mainChart"></canvas></div>
+        </div>
+
+        <div class="tab-bar">
+            <button id="btn-market" class="tab-btn active" onclick="showTab('market')">Market</button>
+            <button id="btn-history" class="tab-btn" onclick="showTab('history')">History</button>
+            <button id="btn-wallet" class="tab-btn" onclick="showTab('wallet')">Wallet</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">Wallet Balance<b id="ui-wallet">₹0.00</b></div>
+            <div class="stat-item">Holdings<b id="ui-holdings">0 LSC</b></div>
+            <div class="stat-item">Avg Price<b id="ui-avg">₹0.00</b></div>
+            <div class="stat-item">Unrealized P/L<b id="ui-pl">₹0.00</b></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn sell" onclick="doTrade('sell')">Sell • Short</button>
+            <button class="btn buy" onclick="doTrade('buy')">Buy • Long</button>
+        </div>
+    </div>
+
+    <div id="history-section" class="hidden">
+        <h3>Order History</h3>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="wallet-section" class="hidden">
+        <h3>Wallet Funds</h3>
+        <div class="glass-card">
+            <input type="number" id="w-amount" placeholder="Enter Amount" style="width:100%; padding:15px; background:#000; border:1px solid #333; color:white; border-radius:12px; box-sizing:border-box;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;">
+                <button onclick="fundRequest('Deposit')" class="btn buy" style="padding:12px">Add Money</button>
+                <button onclick="fundRequest('Withdraw')" class="btn sell" style="padding:12px">Withdraw</button>
             </div>
         </div>
     </div>
@@ -78,118 +100,126 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
-  authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
-  projectId: "lightspeed-trading-1dec9",
-  storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
-  messagingSenderId: "787355268629",
-  appId: "1:787355268629:web:c5c39b7706c6a3548e001c",
-  measurementId: "G-BMG3R0GB2T"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
-
-    let chart, livePrice = 166.0, userData = {wallet:0, qty:0};
-    let cData = [], cLabels = [];
-
-    // --- Tab Switcher ---
-    window.switchTab = (t) => {
-        ['market', 'history', 'wallet'].forEach(s => document.getElementById(s+'-sec').classList.add('hidden'));
-        document.getElementById(t+'-sec').classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+        authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
+        projectId: "lightspeed-trading-1dec9",
+        storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
+        messagingSenderId: "787355268629",
+        appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
     };
 
-    // --- Auth ---
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
+    let chart, livePrice = 165.00, user = { wallet: 0, qty: 0, avg: 0 };
+
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth).then(() => location.reload());
+
+    window.showTab = (tab) => {
+        ['market', 'history', 'wallet'].forEach(t => {
+            document.getElementById(t+'-section').classList.add('hidden');
+            document.getElementById('btn-'+t).classList.remove('active');
+        });
+        document.getElementById(tab+'-section').classList.remove('hidden');
+        document.getElementById('btn-'+tab).classList.add('active');
+    };
 
     onAuthStateChanged(auth, async (u) => {
         if (u) {
             document.getElementById('login-page').classList.add('hidden');
             document.getElementById('app-page').classList.remove('hidden');
-            document.getElementById('u-name').innerText = u.displayName;
-            document.getElementById('u-pfp').innerText = u.displayName[0];
+            document.getElementById('u-display-name').innerText = u.displayName.split(' ')[0];
+            document.getElementById('u-initial').innerText = u.displayName[0];
 
             const uRef = doc(db, "users", u.uid);
-            const snap = await getDoc(uRef);
-            if(!snap.exists()) await setDoc(uRef, {wallet:10000, qty:0, name: u.displayName});
-            onSnapshot(uRef, d => { 
-                userData = d.data(); 
-                document.getElementById('ui-bal').innerText = "₹"+userData.wallet.toFixed(2);
-                document.getElementById('ui-qty').innerText = userData.qty + " LSC";
+            onSnapshot(uRef, d => {
+                if(d.exists()) {
+                    user = d.data();
+                    document.getElementById('ui-wallet').innerText = "₹" + user.wallet.toFixed(2);
+                    document.getElementById('ui-holdings').innerText = user.qty + " LSC";
+                    document.getElementById('ui-avg').innerText = "₹" + (user.avg || 0).toFixed(2);
+                    let pl = (livePrice - (user.avg || 0)) * user.qty;
+                    document.getElementById('ui-pl').innerText = (pl >= 0 ? "+" : "") + "₹" + pl.toFixed(2);
+                    document.getElementById('ui-pl').style.color = pl >= 0 ? "var(--green)" : "var(--red)";
+                } else {
+                    setDoc(uRef, { wallet: 5000, qty: 0, avg: 0, name: u.displayName });
+                }
             });
 
             initChart();
-            startSmartMarket();
-            loadHistory(u.uid);
+            loadMarketData();
+            loadHistoryData(u.uid);
         }
     });
 
-    // --- Market Engine ---
-    async function startSmartMarket() {
-        const historyRef = collection(db, "market_history");
-        const configRef = doc(db, "settings", "market_config");
-
-        // Load History
-        const qH = query(historyRef, orderBy("time", "desc"), limit(25));
-        const hSnap = await getDocs(qH);
-        hSnap.forEach(d => { cData.unshift(d.data().price); cLabels.unshift(""); });
-        chart.update();
-
-        onSnapshot(configRef, (s) => {
-            const conf = s.data() || {minPrice:160, maxPrice:175, targetPrice:170};
-            setInterval(async () => {
-                let drift = (Math.random() - 0.5) * 0.4;
-                if(livePrice >= conf.maxPrice) livePrice -= 0.5;
-                else if(livePrice <= conf.minPrice) livePrice += 0.5;
-                else livePrice += drift;
-
-                if(livePrice < conf.targetPrice) livePrice += 0.03; else livePrice -= 0.03;
-
-                document.getElementById('price-val').innerText = "₹"+livePrice.toFixed(2);
-                cData.push(livePrice); cLabels.push("");
-                if(cData.length > 25) { cData.shift(); cLabels.shift(); }
-                chart.update();
-
-                if(new Date().getSeconds() % 30 === 0) {
-                    await addDoc(historyRef, {price: livePrice, time: serverTimestamp()});
-                }
-            }, 3000);
-        });
-    }
-
     function initChart() {
-        chart = new Chart(document.getElementById('liveChart'), {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        chart = new Chart(ctx, {
             type: 'line',
-            data: { labels: cLabels, datasets: [{ data: cData, borderColor: '#38bdf8', borderWidth: 3, tension: 0.4, pointRadius: 0, fill: true, backgroundColor: 'rgba(56,189,248,0.1)' }] },
-            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:false}, scales:{x:{display:false}, y:{grid:{color:'#222'}}} }
+            data: { labels: [], datasets: [{ data: [], borderColor: '#38bdf8', borderWidth: 3, tension: 0.4, fill: true, backgroundColor: 'rgba(56,189,248,0.1)', pointRadius: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { x: { display: false }, y: { grid: { color: '#222' } } } }
         });
     }
 
-    window.trade = async (mode) => {
-        const qty = parseInt(prompt("Qty:")); if(!qty) return;
+    function loadMarketData() {
+        onSnapshot(query(collection(db, "market_history"), orderBy("time", "desc"), limit(20)), s => {
+            const data = s.docs.map(d => d.data().price).reverse();
+            chart.data.labels = data.map(() => "");
+            chart.data.datasets[0].data = data;
+            chart.update();
+            if(data.length > 0) {
+                livePrice = data[data.length-1];
+                document.getElementById('price-val').innerText = "₹" + livePrice.toFixed(2);
+                const diff = livePrice - 165;
+                const perc = (diff / 165) * 100;
+                document.getElementById('price-change').innerText = (diff >= 0 ? "+" : "") + "₹" + diff.toFixed(2) + " (" + perc.toFixed(2) + "%)";
+                document.getElementById('price-change').style.color = diff >= 0 ? "var(--green)" : "var(--red)";
+            }
+        });
+    }
+
+    window.doTrade = async (mode) => {
+        const qty = parseInt(prompt(`How many LSC to ${mode.toUpperCase()}?`));
+        if(!qty || qty <= 0) return;
         const total = qty * livePrice;
-        const ref = doc(db, "users", auth.currentUser.uid);
-        if(mode === 'buy' && userData.wallet >= total) {
-            await updateDoc(ref, {wallet: userData.wallet - total, qty: userData.qty + qty});
-        } else if(mode === 'sell' && userData.qty >= qty) {
-            await updateDoc(ref, {wallet: userData.wallet + total, qty: userData.qty - qty});
-        } else { return alert("Invalid Transaction"); }
-        await addDoc(collection(db, "trades"), {uid: auth.currentUser.uid, type: mode, qty, price: livePrice, time: serverTimestamp()});
+        const uRef = doc(db, "users", auth.currentUser.uid);
+
+        if(mode === 'buy') {
+            if(user.wallet < total) return alert("Insufficient Balance");
+            let newAvg = ((user.avg * user.qty) + total) / (user.qty + qty);
+            await updateDoc(uRef, { wallet: user.wallet - total, qty: user.qty + qty, avg: newAvg });
+        } else {
+            if(user.qty < qty) return alert("Not enough holdings");
+            await updateDoc(uRef, { wallet: user.wallet + total, qty: user.qty - qty });
+        }
+        await addDoc(collection(db, "trades"), { uid: auth.currentUser.uid, type: mode, qty, price: livePrice, time: serverTimestamp() });
+    };
+
+    function loadHistoryData(uid) {
+        onSnapshot(query(collection(db, "trades"), where("uid", "==", uid), orderBy("time", "desc")), s => {
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            s.forEach(d => {
+                const t = d.data();
+                list.innerHTML += `<div class="glass-card" style="padding:12px; margin-bottom:8px; border-left:4px solid ${t.type=='buy'?'var(--green)':'var(--red)'}">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${t.type.toUpperCase()} ${t.qty} LSC</b>
+                        <span>₹${(t.qty * t.price).toFixed(2)}</span>
+                    </div>
+                    <small style="opacity:0.5;">Price: ₹${t.price.toFixed(2)}</small>
+                </div>`;
+            });
+        });
+    }
+
+    window.fundRequest = async (type) => {
+        const amt = parseFloat(document.getElementById('w-amount').value);
+        if(!amt || amt < 100) return alert("Min amount ₹100");
+        await addDoc(collection(db, "requests"), { uid: auth.currentUser.uid, email: auth.currentUser.email, amount: amt, type, status: "pending", time: serverTimestamp() });
+        alert("Request sent to Admin!");
     };
 </script>
 </body>
