@@ -1,77 +1,86 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SAHI Admin</title>
+    <title>SAHI Admin Console</title>
     <style>
         body { background: #0b0e14; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #161b22; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #444; color: white; box-sizing: border-box; }
+        .card { background: #161b22; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; }
+        input { width: 100%; padding: 12px; background: #000; color: white; border: 1px solid #444; border-radius: 8px; margin: 10px 0; box-sizing: border-box;}
         button { width: 100%; padding: 12px; background: #38bdf8; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        .list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+        .req { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0; }
     </style>
 </head>
 <body>
-    <h2>🛠️ SAHI Admin Control</h2>
+    <h2>🛠️ Market & User Control</h2>
 
     <div class="card">
-        <h3>🎯 Set Market Plan (24h)</h3>
-        <input type="number" id="t-price" placeholder="Target Price (e.g., 172)">
-        <button onclick="updateMarket()">Set & Deploy Target</button>
+        <h3>🎯 Market Target (160 - 175 Range)</h3>
+        <p>Current Price: ₹<span id="cur-p">0.00</span></p>
+        <input type="number" id="target-p" placeholder="Set Target Price (e.g. 172)">
+        <button onclick="setMarketPlan()">Update 24h Target</button>
+        <p style="font-size:11px; opacity:0.5; margin-top:10px;">Note: Price will randomly fluctuate but stay within 160-175 and aim for your target.</p>
     </div>
 
     <div class="card">
-        <h3>📥 Wallet Requests</h3>
-        <div id="req-list"></div>
+        <h3>📥 Fund Requests</h3>
+        <div id="req-list">Loading...</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, where, orderBy, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
+            authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
+            projectId: "lightspeed-trading-1dec9",
+            storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
+            messagingSenderId: "787355268629",
+            appId: "1:787355268629:web:c5c39b7706c6a3548e001c"
+        };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCuCNl6FOWldVkjGAlqU1eTxPPOWn_pKtY",
-  authDomain: "lightspeed-trading-1dec9.firebaseapp.com",
-  projectId: "lightspeed-trading-1dec9",
-  storageBucket: "lightspeed-trading-1dec9.firebasestorage.app",
-  messagingSenderId: "787355268629",
-  appId: "1:787355268629:web:c5c39b7706c6a3548e001c",
-  measurementId: "G-BMG3R0GB2T"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.updateMarket = async () => {
-            const target = parseFloat(document.getElementById('t-price').value);
-            await setDoc(doc(db, "settings", "market_config"), {
-                targetPrice: target,
-                minPrice: 160,
-                maxPrice: 175,
-                lastUpdate: serverTimestamp()
-            }, {merge: true});
-            alert("Market Target Set!");
-        };
+        // --- AUTOMATED MARKET ENGINE ---
+        let livePrice = 165.00;
+        let targetPrice = 170.00;
 
+        async function setMarketPlan() {
+            targetPrice = parseFloat(document.getElementById('target-p').value);
+            await setDoc(doc(db, "settings", "market"), { target: targetPrice });
+            alert("Target Updated!");
+        }
+
+        // Price Generator (Runs every 4 seconds)
+        setInterval(async () => {
+            let drift = (Math.random() - 0.5) * 0.5; // Random move
+            
+            // Stay in 160-175
+            if(livePrice > 174) livePrice -= 0.6;
+            else if(livePrice < 161) livePrice += 0.6;
+            else livePrice += drift;
+
+            // Pull towards target
+            if(livePrice < targetPrice) livePrice += 0.05;
+            else livePrice -= 0.05;
+
+            document.getElementById('cur-p').innerText = livePrice.toFixed(2);
+            
+            // Save to history for graph
+            await addDoc(collection(db, "market_history"), { price: livePrice, time: serverTimestamp() });
+        }, 4000);
+
+        // --- REQUESTS APPROVAL ---
         onSnapshot(query(collection(db, "requests"), where("status", "==", "pending")), s => {
             const list = document.getElementById('req-list');
             list.innerHTML = "";
             s.forEach(d => {
                 const r = d.data();
-                list.innerHTML += `<div class="list-item">
-                    <span>${r.email} - ₹${r.amount} (${r.type})</span>
-                    <button onclick="approve('${d.id}', '${r.uid}', ${r.amount}, '${r.type}')" style="width:80px; background:green;">Approve</button>
+                list.innerHTML += `<div class="req">
+                    <div><b>${r.email}</b><br><small>${r.type}: ₹${r.amount}</small></div>
+                    <button onclick="approve('${d.id}', '${r.uid}', ${r.amount}, '${r.type}')" style="width:80px; background:green;">OK</button>
                 </div>`;
             });
         });
@@ -79,10 +88,9 @@ const analytics = getAnalytics(app);
         window.approve = async (id, uid, amt, type) => {
             const uRef = doc(db, "users", uid);
             const uSnap = await getDoc(uRef);
-            let newB = type === 'Deposit' ? (uSnap.data().wallet + amt) : (uSnap.data().wallet - amt);
-            await updateDoc(uRef, {wallet: newB});
-            await updateDoc(doc(db, "requests", id), {status: 'approved'});
-            alert("Done!");
+            let newBal = type === 'Deposit' ? (uSnap.data().wallet + amt) : (uSnap.data().wallet - amt);
+            await updateDoc(uRef, { wallet: newBal });
+            await updateDoc(doc(db, "requests", id), { status: "approved" });
         };
     </script>
 </body>
